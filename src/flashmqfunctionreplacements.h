@@ -1,0 +1,7 @@
+#ifndef FLASHMQFUNCTIONREPLACEMENTS_H
+#define FLASHMQFUNCTIONREPLACEMENTS_H
+
+#include <stdint.h>
+#include <memory>
+
+#endif // FLASHMQFUNCTIONREPLACEMENTS_H
