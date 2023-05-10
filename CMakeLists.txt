@@ -8,6 +8,8 @@ project(flashmq-dbus-plugin VERSION 0.0.1 LANGUAGES CXX)
 
 add_compile_options(-Wall -Wno-psabi)
 
+include(GNUInstallDirs)
+
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
@@ -72,3 +74,4 @@ target_link_libraries(flashmq-dbus-plugin pthread dbus-1)
 target_link_libraries(flashmq-dbus-plugin-tests pthread dbus-1)
 
 install(TARGETS flashmq-dbus-plugin-tests RUNTIME DESTINATION "/usr/local/bin/")
+install(TARGETS flashmq-dbus-plugin DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/flashmq")
