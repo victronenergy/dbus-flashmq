@@ -71,7 +71,4 @@ target_link_libraries(flashmq-dbus-plugin pthread dbus-1)
 
 target_link_libraries(flashmq-dbus-plugin-tests pthread dbus-1)
 
-set_target_properties(flashmq-dbus-plugin PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(flashmq-dbus-plugin PROPERTIES SOVERSION 1)
-
 install(TARGETS flashmq-dbus-plugin-tests RUNTIME DESTINATION "/usr/local/bin/")
