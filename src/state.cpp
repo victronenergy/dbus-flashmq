@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <functional>
+#include <fstream>
 #include <sstream>
 #include <cassert>
 #include <sys/types.h>
@@ -18,6 +19,8 @@
 #include "dbuserrorguard.h"
 #include "exceptions.h"
 #include "dbusmessageitersignature.h"
+
+using namespace std;
 
 std::atomic_int State::instance_counter = 0;
 
@@ -58,7 +61,10 @@ State::~State()
 
 void State::get_unique_id()
 {
-    this->unique_vrm_id = get_stdout_from_process("get-unique-id");
+    fstream file;
+
+    file.open("/data/venus/unique-id", ios::in);
+    getline(file, this->unique_vrm_id);
     trim(this->unique_vrm_id);
 
     if (this->unique_vrm_id.empty())
