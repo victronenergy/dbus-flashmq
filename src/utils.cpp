@@ -45,7 +45,7 @@ int epoll_flags_to_dbus_watch_flags(int epoll_flags)
 
 std::vector<std::string> splitToVector(const std::string &input, const char sep, size_t max, bool keep_empty_parts)
 {
-    const auto substring_count = std::count(input.begin(), input.end(), '/') + 1;
+    const auto substring_count = std::count(input.begin(), input.end(), sep) + 1;
     std::vector<std::string> result;
     result.reserve(substring_count);
 
