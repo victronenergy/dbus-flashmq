@@ -550,8 +550,6 @@ void State::remove_dbus_service(const std::string &service)
             }
         }
     }
-
-
 }
 
 void State::setDispatchable()
@@ -563,8 +561,6 @@ void State::setDispatchable()
         flashmq_logf(LOG_ERR, err);
     }
 }
-
-
 
 void Watch::add_watch(DBusWatch *watch)
 {
@@ -608,14 +604,3 @@ bool Watch::empty() const
 {
     return watches.empty();
 }
-
-
-
-
-
-
-
-
-
-
-
