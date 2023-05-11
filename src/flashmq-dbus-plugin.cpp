@@ -60,8 +60,6 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
     if (!reloading)
     {
         state->get_unique_id();
-        state->open();
-        state->scan_all_dbus_services();
 
         // Path to register_at_vrm.py.
         std::string &register_path = plugin_opts["vrm_registrator_script"];
@@ -75,6 +73,9 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
         {
             flashmq_logf(LOG_WARNING, "The option 'vrm_registrator_script' is not set. In the final version, this needs to be done.");
         }
+
+        state->open();
+        state->scan_all_dbus_services();
     }
 }
 

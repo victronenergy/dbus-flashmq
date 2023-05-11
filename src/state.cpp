@@ -60,6 +60,9 @@ void State::get_unique_id()
 {
     this->unique_vrm_id = get_stdout_from_process("get-unique-id");
     trim(this->unique_vrm_id);
+
+    if (this->unique_vrm_id.empty())
+        throw std::runtime_error("Failed to obtain unique VRM identifier.");
 }
 
 

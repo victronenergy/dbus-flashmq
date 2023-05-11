@@ -7,6 +7,7 @@
 #include <sstream>
 #include <sys/wait.h>
 #include <iostream>
+#include <sys/resource.h>
 
 #include "exceptions.h"
 #include "fdguard.h"
@@ -141,6 +142,12 @@ std::string get_stdout_from_process(const std::string &process, pid_t &out_pid)
         // We duplicated our write fd, so we can close these.
         close(pipe_fds[1]);
         close(pipe_fds[0]);
+
+        // Brute force close any open file/socket, because I don't want the child to see them.
+        struct rlimit rlim;
+        memset(&rlim, 0, sizeof (struct rlimit));
+        getrlimit(RLIMIT_NOFILE, &rlim);
+        for (rlim_t i = 3; i < rlim.rlim_cur; ++i) close (i);
 
         execlp(process.c_str(), process.c_str(), nullptr);
         std::cerr << strerror(errno) << std::endl;
