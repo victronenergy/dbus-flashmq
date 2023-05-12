@@ -255,7 +255,7 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
                 if (signal_name == "ItemsChanged")
                 {
                     std::unordered_map<std::string, Item> changed_items = get_from_dict_with_dict_with_text_and_value(message);
-                    state->add_dbus_to_mqtt_mapping(sender, changed_items);
+                    state->add_dbus_to_mqtt_mapping(sender, changed_items, true);
 
                     return DBusHandlerResult::DBUS_HANDLER_RESULT_HANDLED;
                 }

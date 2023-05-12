@@ -70,7 +70,7 @@ struct State
 
     State();
     ~State();
-    void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items);
+    void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
     void add_dbus_to_mqtt_mapping(const std::string &service, uint32_t instance, Item &item);
     void handle_properties_changed(DBusMessage *msg, const std::string &service);
     const Item &find_item_by_mqtt_path(const std::string &topic) const;
@@ -85,7 +85,7 @@ struct State
     dbus_uint32_t call_method(const std::string &service, const std::string &path, const std::string &interface, const std::string &method,
                               const std::vector<VeVariant> &args = std::vector<VeVariant>());
     void write_to_dbus(const std::string &topic, const std::string &payload);
-    uint32_t store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items);
+    uint32_t store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
     void handle_keepalive(const std::string &payload);
     void unset_keepalive();
     void publish_all();

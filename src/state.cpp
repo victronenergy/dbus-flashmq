@@ -71,10 +71,16 @@ void State::get_unique_id()
         throw std::runtime_error("Failed to obtain unique VRM identifier.");
 }
 
-
-void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_map<std::string, Item> &items)
+/**
+ * @brief State::add_dbus_to_mqtt_mapping
+ * @param service
+ * @param items
+ * @param instance_must_be_known When items is a set of items from a signal, the /DeviceInstance is not among them. But when the items
+ *        are from a call to GetValue on /, it is. Set this bool to make sure you don't make the wrong assumptions.
+ */
+void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_map<std::string, Item> &items, bool instance_must_be_known)
 {
-    uint32_t device_instance = store_and_get_instance_from_service(service, items);
+    uint32_t device_instance = store_and_get_instance_from_service(service, items, instance_must_be_known);
 
     ShortServiceName s(service, device_instance);
     this->service_type_and_instance_to_full_service[s] = service;
@@ -285,12 +291,15 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
     this->async_handlers[serial] = handler;
 }
 
-uint32_t State::store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items)
+uint32_t State::store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known)
 {
     uint32_t device_instance = 0;
     auto pos = this->service_names_to_instance.find(service);
     if (pos == this->service_names_to_instance.end())
     {
+        if (instance_must_be_known)
+            throw std::runtime_error("Programming error: you're assuming we know the instance already.");
+
         device_instance = get_instance_from_items(items);
         this->service_names_to_instance[service] = device_instance;
     }
@@ -450,7 +459,7 @@ void State::scan_dbus_service(const std::string &service)
         }
 
         std::unordered_map<std::string, Item> items = get_from_get_value_on_root(msg);
-        state->add_dbus_to_mqtt_mapping(service, items);
+        state->add_dbus_to_mqtt_mapping(service, items, false);
     };
 
     auto get_items_handler = [get_value_handler](State *state, const std::string &service, DBusMessage *msg) {
@@ -482,7 +491,7 @@ void State::scan_dbus_service(const std::string &service)
         }
 
         std::unordered_map<std::string, Item> items = get_from_dict_with_dict_with_text_and_value(msg);
-        state->add_dbus_to_mqtt_mapping(service, items);
+        state->add_dbus_to_mqtt_mapping(service, items, false);
     };
 
     auto get_name_owner_handler = [get_items_handler](State *state, const std::string &service, DBusMessage *msg) {
