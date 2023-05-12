@@ -57,26 +57,26 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
 {
     State *state = static_cast<State*>(thread_data);
 
-    if (!reloading)
+    if (reloading)
+        return;
+
+    state->get_unique_id();
+
+    // Path to register_at_vrm.py.
+    std::string &register_path = plugin_opts["vrm_registrator_script"];
+
+    if (!register_path.empty())
     {
-        state->get_unique_id();
-
-        // Path to register_at_vrm.py.
-        std::string &register_path = plugin_opts["vrm_registrator_script"];
-
-        if (!register_path.empty())
-        {
-            auto f = std::bind(&register_at_vrm, register_path, state);
-            state->vrm_registrator_thread = std::thread(f);
-        }
-        else
-        {
-            flashmq_logf(LOG_WARNING, "The option 'vrm_registrator_script' is not set. In the final version, this needs to be done.");
-        }
-
-        state->open();
-        state->scan_all_dbus_services();
+        auto f = std::bind(&register_at_vrm, register_path, state);
+        state->vrm_registrator_thread = std::thread(f);
     }
+    else
+    {
+        flashmq_logf(LOG_WARNING, "The option 'vrm_registrator_script' is not set. In the final version, this needs to be done.");
+    }
+
+    state->open();
+    state->scan_all_dbus_services();
 }
 
 void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, std::string> &plugin_opts, bool reloading)
