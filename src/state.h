@@ -42,6 +42,17 @@ public:
 
 };
 
+struct QueuedChangedItem
+{
+    std::string service;
+    std::string path;
+    VeVariant value;
+    std::chrono::time_point<std::chrono::steady_clock> created_at = std::chrono::steady_clock::now();
+
+    QueuedChangedItem(const std::string &service, const std::string &path, const VeVariant &value);
+    std::chrono::seconds age() const;
+};
+
 struct State
 {
     std::thread vrm_registrator_thread;
@@ -67,6 +78,7 @@ struct State
     std::unordered_map<ShortServiceName, std::string> service_type_and_instance_to_full_service; // like 'solarcharger/258' to 'com.victronenergy.solarcharger.ttyO2'
     std::unordered_map<std::string, uint32_t> service_names_to_instance; // like 'com.victronenergy.solarcharger.ttyO2' to 258
     std::unordered_map<std::string, std::unordered_map<std::string, Item>> dbus_service_items; // keyed by service, then by dbus path, without instance.
+    std::vector<QueuedChangedItem> delayed_changed_values;
 
     State();
     ~State();
@@ -76,6 +88,7 @@ struct State
     const Item &find_item_by_mqtt_path(const std::string &topic) const;
     Item &find_matching_active_item(const Item &item);
     Item &find_by_service_and_dbus_path(const std::string &service, const std::string &dbus_path);
+    void attempt_to_process_delayed_changes();
     void get_unique_id();
     void open();
     void scan_all_dbus_services();
