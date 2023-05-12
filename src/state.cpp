@@ -186,7 +186,7 @@ Item &State::find_by_service_and_dbus_path(const std::string &service, const std
     auto pos = dbus_service_items.find(service);
 
     if (pos == dbus_service_items.end())
-        throw std::runtime_error("Can't find service :" + service);
+        throw std::runtime_error("Can't find service: " + service);
 
     std::unordered_map<std::string, Item> &items = pos->second;
 
