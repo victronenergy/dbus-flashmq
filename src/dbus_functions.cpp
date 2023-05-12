@@ -197,9 +197,24 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
         const std::string signal_name(_signal_name ? _signal_name : "");
         int msg_type = dbus_message_get_type(message);
 
+        const char *_sender = dbus_message_get_sender(message);
+        std::string sender(_sender ? _sender : "");
+
         if (msg_type == DBUS_MESSAGE_TYPE_SIGNAL)
         {
-            if (signal_name == "NameOwnerChanged")
+            if (signal_name == "NameAcquired")
+            {
+                const char *_name = nullptr;
+                DBusErrorGuard err;
+                dbus_message_get_args(message, err.get(), DBUS_TYPE_STRING, &_name, DBUS_TYPE_INVALID);
+                err.throw_error();
+
+                std::string name(_name);
+
+                flashmq_logf(LOG_DEBUG, "Signal: '%s' by '%s'. Name: '%s'", signal_name.c_str(), sender.c_str(), name.c_str());
+                return DBusHandlerResult::DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+            }
+            else if (signal_name == "NameOwnerChanged")
             {
                 const char *_name = nullptr;
                 const char *_oldowner = nullptr;
@@ -232,9 +247,8 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
                 return DBusHandlerResult::DBUS_HANDLER_RESULT_HANDLED;
             }
 
-            const char *_sender = dbus_message_get_sender(message);
-            std::string sender(_sender ? _sender : "");
             sender = state->get_named_owner(sender);
+            //flashmq_logf(LOG_DEBUG, "Received signal: '%s' by '%s'", signal_name.c_str(), sender.c_str());
 
             if (sender.find("com.victronenergy") != std::string::npos)
             {
@@ -253,7 +267,7 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
                 }
             }
 
-            flashmq_logf(LOG_INFO, "Unhandled signal: %s", signal_name.c_str());
+            flashmq_logf(LOG_INFO, "Unhandled signal: '%s' by '%s'", signal_name.c_str(), sender.c_str());
         }
     }
     catch (std::exception &ex)
