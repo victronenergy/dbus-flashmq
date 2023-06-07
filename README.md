@@ -1,12 +1,12 @@
 dbus-mqtt-flashmq-plugin
 =========
 
-A plugin that turns FlashMQ into a dbus aware MQTT broker. It also supports receiving requests to change values on the local D-Bus. It's a faster replacement for the original Python dbus-mqtt.
+A plugin that turns FlashMQ into a dbus aware MQTT broker. It also supports receiving requests to change values on the local D-Bus. It's a faster replacement for the original Python dbus-mqtt. And, because it integrated with FlashMQ's event loop, it can coordinate dbus and mqtt activity as efficiently as possible.
 
-This application runs as a service on [Venus OS](https://github.com/victronenergy/venus/wiki). By default it is disabled. To enable,
+FlashMQ with this plugin will run as a service on [Venus OS](https://github.com/victronenergy/venus/wiki). It's currently still in testing, so not available in the GUI. See [Replace Mosquitto with FlashMQ](https://github.com/victronenergy/venus/issues/1098#issuecomment-1576458790) how to enable it. Once part of mainstream Venus, it will be like before: by default it is disabled. To enable,
 go to Settings -> Services -> MQTT on the menus of the GX device.
 
-Dbus-mqtt-plugin runs inside FlashMQ running on the GX device itself. That broker is
+Dbus-mqtt-plugin runs inside FlashMQ running on the GX device itself. That broker will be
 accessible on the local network at TCP port 1883. Furthermore the broker is configured to forward all
 communication to the central Victron MQTT broker (see the broker URL section for the Victron MQTT broker URL), which allows you to monitor and
 control your CCGX over the internet. You'll need your VRM credentials to access this broker. See 'Connecting
