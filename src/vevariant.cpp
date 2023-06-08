@@ -6,6 +6,7 @@
 #include "vendor/flashmq_plugin.h"
 #include "exceptions.h"
 #include "dbusmessageiteropencontainerguard.h"
+#include "dbusmessageitersignature.h"
 
 VeVariantArray::VeVariantArray(const VeVariantArray &other)
 {
@@ -105,6 +106,9 @@ VeVariant::VeVariant(DBusMessageIter *iter)
         DBusMessageIter peek_iter;
         dbus_message_iter_recurse(_iter, &peek_iter);
         const int array_type = dbus_message_iter_get_arg_type(&peek_iter);
+
+        DBusMessageIterSignature signature(&peek_iter);
+        this->contained_array_type_as_string = signature.signature;
 
         if (array_type == DBUS_TYPE_DICT_ENTRY)
         {
@@ -382,10 +386,18 @@ nlohmann::json VeVariant::as_json_value() const
     }
     case VeVariantType::Array:
     {
+        // The array being null when we think we are an array shouldn't happen, but playing it safe.
+        if (!this->arr)
+            return nlohmann::json();
+
         nlohmann::json array = nlohmann::json::array({});
 
         if (this->arr)
         {
+            // I disabled the EMPTY_ARRAY_AS_NULL_VALUE_TYPE check, because there are dbus services that don't seem to stick to that rule.
+            if (this->arr->empty()) // && this->contained_array_type_as_string == EMPTY_ARRAY_AS_NULL_VALUE_TYPE)
+                return nlohmann::json();
+
             for (VeVariant &v : *this->arr)
             {
                 array.push_back(v.as_json_value());
