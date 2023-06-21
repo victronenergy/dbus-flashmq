@@ -403,7 +403,7 @@ void State::handle_keepalive(const std::string &payload)
     bool suppress_publish_of_all = payload.find("suppress-republish") != std::string::npos;
 
     // Always do it the first time, whether or not suppression is set.
-    if (!suppress_publish_of_all || !alive)
+    if (!suppress_publish_of_all)
         publish_all();
 
     this->alive = true;
