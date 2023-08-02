@@ -125,32 +125,37 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
         if (access == AclAccess::write)
         {
             const std::string &action = subtopics.at(0);
-            const std::string &system_id = subtopics.at(1);
 
-            if (system_id != state->unique_vrm_id)
+            // Wo only work on strings like R/<portalid>/system/0/Serial.
+            if (action == "W" || action == "R")
             {
-                flashmq_logf(LOG_ERR, "We received a request for '%', but that's not us (%s)", system_id.c_str(), state->unique_vrm_id.c_str());
-                return AuthResult::success;
-            }
+                const std::string &system_id = subtopics.at(1);
 
-            // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
-            if (action == "W")
-            {
-                std::string payload_str(payload);
-                state->write_to_dbus(topic, payload_str);
-            }
-            else if (action == "R")
-            {
-                std::string payload_str(payload);
-                const std::string path = splitToVector(topic, '/', 2).at(2);
-                if (path == "system/0/Serial" || path == "keepalive")
+                if (system_id != state->unique_vrm_id)
                 {
-                    state->handle_keepalive(payload_str);
+                    flashmq_logf(LOG_ERR, "We received a request for '%s', but that's not us (%s)", system_id.c_str(), state->unique_vrm_id.c_str());
+                    return AuthResult::success;
                 }
 
-                if (path != "keepalive")
+                // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
+                if (action == "W")
                 {
-                    state->handle_read(topic);
+                    std::string payload_str(payload);
+                    state->write_to_dbus(topic, payload_str);
+                }
+                else if (action == "R")
+                {
+                    std::string payload_str(payload);
+                    const std::string path = splitToVector(topic, '/', 2).at(2);
+                    if (path == "system/0/Serial" || path == "keepalive")
+                    {
+                        state->handle_keepalive(payload_str);
+                    }
+
+                    if (path != "keepalive")
+                    {
+                        state->handle_read(topic);
+                    }
                 }
             }
         }
