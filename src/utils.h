@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <sys/random.h>
 
 #include "types.h"
 
@@ -24,5 +25,14 @@ std::string dbus_message_get_error_name_safe(DBusMessage *msg);
 int16_t s_to_int16(const std::string &s);
 uint8_t s_to_uint8(const std::string &s);
 uint16_t s_to_uint16(const std::string &s);
+
+template<class T>
+T get_random()
+{
+    std::vector<T> buf(1);
+    getrandom(buf.data(), sizeof(T), 0);
+    T val = buf.at(0);
+    return val;
+}
 
 #endif // UTILS_H

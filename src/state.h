@@ -56,6 +56,9 @@ struct State
     std::thread vrm_registrator_thread;
     pid_t registrator_pid = -1;
 
+    uint32_t register_pending_id = 0;
+    bool bridge_connected = false;
+
     static std::atomic_int instance_counter;
     std::string unique_vrm_id;
 
@@ -105,6 +108,7 @@ struct State
     std::string get_named_owner(std::string sender) const;
     void remove_id_to_owner(const std::string &owner);
     void handle_read(const std::string &topic);
+    void initiate_broker_registration(uint32_t delay);
 };
 
 #endif // STATE_H

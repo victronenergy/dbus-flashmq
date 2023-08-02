@@ -499,6 +499,47 @@ void State::handle_read(const std::string &topic)
     this->async_handlers[serial] = handler;
 }
 
+/**
+ * @brief State::initiate_broker_registration calls a dbus method to have Venus Platform call mosquitto_bridge_registrator.py. Contrary to
+ * the previous dbus-mqtt, we are not root anymore, so we can't do it directly.
+ * @param delay
+ */
+void State::initiate_broker_registration(uint32_t delay)
+{
+    if (register_pending_id > 0)
+    {
+        flashmq_logf(LOG_WARNING, "Trying to register at VRM while a dbus method request for it is still pending.");
+        return;
+    }
+
+    auto register_at_vrm_handler = [](State *state, DBusMessage *msg) {
+        state->register_pending_id = 0;
+
+        const int msg_type = dbus_message_get_type(msg);
+
+        if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
+        {
+            std::string error = dbus_message_get_error_name_safe(msg);
+            flashmq_logf(LOG_ERR, "Error on SetValue on /Mqtt/RegisterOnVrm: %s", error.c_str());
+            return;
+        }
+
+        flashmq_logf(LOG_NOTICE, "SetValue on /Mqtt/RegisterOnVrm seemingly successful.");
+    };
+
+    auto register_f = [register_at_vrm_handler](State *state) {
+        flashmq_logf(LOG_NOTICE, "Initiating bridge registration.");
+
+        dbus_uint32_t serial = state->call_method("com.victronenergy.platform", "/Mqtt/RegisterOnVrm", "com.victronenergy.platform", "SetValue", {{"1"}}, true);
+
+        auto handler_f = std::bind(register_at_vrm_handler, state, std::placeholders::_1);
+        state->async_handlers[serial] = handler_f;
+    };
+
+    auto f = std::bind(register_f, this);
+    register_pending_id = flashmq_add_task(f, delay);
+}
+
 void State::scan_all_dbus_services()
 {
     auto list_names_handler = [](State *state, DBusMessage *msg) {

@@ -62,6 +62,8 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
 
     state->get_unique_id();
 
+    state->initiate_broker_registration(0);
+
     // Path to register_at_vrm.py.
     std::string &register_path = plugin_opts["vrm_registrator_script"];
 
@@ -155,6 +157,36 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                     if (path != "keepalive")
                     {
                         state->handle_read(topic);
+                    }
+                }
+            }
+            else if (action == "$SYS" && subtopics.size() >= 5)
+            {
+                // Deal with bridge notifications like $SYS/broker/bridge/GXdbus/connected
+
+                const std::string &bridgeName = subtopics.at(3);
+                const std::string payload_str(payload);
+
+                if ((bridgeName == "GXdbus" || bridgeName == "GXrpc"))
+                {
+                    if (payload_str == "1")
+                    {
+                        state->bridge_connected = true;
+                    }
+                    else if (state->bridge_connected && payload_str == "0" && state->register_pending_id == 0)
+                    {
+                        state->bridge_connected = false;
+
+                        /*
+                         * Note that for the majority of users, this re-registration is not needed and it will just reconnect. We need to do it
+                         * just in case (for installations that may have had their tokens reset), and we can allow some random wait time
+                         * to prevent DDOS on the registration server.
+                         */
+                        const uint32_t delay = get_random<uint32_t>() % 600000;
+
+                        flashmq_logf(LOG_NOTICE, "Bridge '%s' disconnect detected. We will initiate a re-registration in %d ms.", bridgeName.c_str(), delay);
+
+                        state->initiate_broker_registration(delay);
                     }
                 }
             }
