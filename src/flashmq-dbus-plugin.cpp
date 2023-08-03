@@ -12,25 +12,6 @@
 
 // https://dbus.freedesktop.org/doc/api/html/index.html
 
-/**
- * @brief register_at_vrm is meant to be called in a thread, calling 'register_at_vrm.py'.
- * @param path
- * @param state Don't do anything fancy with state, because we're in a thread here.
- */
-void register_at_vrm(const std::string &path, State *state)
-{
-    try
-    {
-        get_stdout_from_process(path, state->registrator_pid);
-        flashmq_logf(LOG_INFO, "Command '%s' reports success.", path.c_str());
-    }
-    catch (std::exception &ex)
-    {
-        flashmq_logf(LOG_ERR, "Registration at VRM failed: %s", ex.what());
-    }
-}
-
-
 int flashmq_plugin_version()
 {
     return FLASHMQ_PLUGIN_VERSION;
@@ -63,19 +44,6 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
     state->get_unique_id();
 
     state->initiate_broker_registration(0);
-
-    // Path to register_at_vrm.py.
-    std::string &register_path = plugin_opts["vrm_registrator_script"];
-
-    if (!register_path.empty())
-    {
-        auto f = std::bind(&register_at_vrm, register_path, state);
-        state->vrm_registrator_thread = std::thread(f);
-    }
-    else
-    {
-        flashmq_logf(LOG_WARNING, "The option 'vrm_registrator_script' is not set. In the final version, this needs to be done.");
-    }
 
     state->open();
     state->scan_all_dbus_services();

@@ -47,17 +47,7 @@ State::State()
 
 State::~State()
 {
-    const pid_t _register_pid = this->registrator_pid;
-    if (_register_pid > 0)
-    {
-        flashmq_logf(LOG_WARNING, "Killing VRM registrator with pid %d, because it's still running.", _register_pid);
-        kill(_register_pid, SIGKILL);
-    }
 
-    if (vrm_registrator_thread.joinable())
-    {
-        vrm_registrator_thread.join();
-    }
 }
 
 void State::get_unique_id()

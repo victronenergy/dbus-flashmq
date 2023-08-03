@@ -53,9 +53,6 @@ struct QueuedChangedItem
 
 struct State
 {
-    std::thread vrm_registrator_thread;
-    pid_t registrator_pid = -1;
-
     uint32_t register_pending_id = 0;
     bool bridge_connected = false;
 
