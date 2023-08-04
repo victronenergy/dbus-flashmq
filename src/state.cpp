@@ -128,7 +128,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, uint32_t instan
     item.set_mapping_details(unique_vrm_id, service, instance);
     dbus_service_items[service][item.get_path()] = item;
 
-    if (this->alive || item.should_be_retained())
+    if (this->alive)
         item.publish();
 }
 

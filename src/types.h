@@ -36,7 +36,6 @@ public:
     void set_value(const VeVariant &val);
     const std::string &get_path() const;
     const std::string &get_service_name() const;
-    bool should_be_retained() const;
 };
 
 #endif // TYPES_H

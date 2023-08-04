@@ -229,15 +229,9 @@ void Item::publish(bool null_payload)
     if (!null_payload)
         payload = as_json();
 
-    const bool retain = should_be_retained();
-
-    // Now that we use retain very selectively, never unpublish it.
-    if (!(should_be_retained() && payload.empty()))
-    {
-        // Note that FlashMQ merely appends the packet to the TCP client's output buffer as bytes, and once you return control
-        // to the main loop, this buffer is flushed. This is a prerequisite to being fast.
-        flashmq_publish_message(this->mqtt_publish_topic.get(), 0, retain, payload);
-    }
+    // Note that FlashMQ merely appends the packet to the TCP client's output buffer as bytes, and once you return control
+    // to the main loop, this buffer is flushed. This is a prerequisite to being fast.
+    flashmq_publish_message(this->mqtt_publish_topic.get(), 0, false, payload);
 }
 
 /**
@@ -265,14 +259,6 @@ const std::string &Item::get_service_name() const
     return this->service_name.get();
 }
 
-/**
- * @brief Even though we don't use retained message anymore, some paths are still handy to have as retained.
- * @return
- */
-bool Item::should_be_retained() const
-{
-    return (short_service_name.service_type == "system" && path.get() == "/Serial") || path.get() == "/keepalive";
-}
 
 
 
