@@ -237,6 +237,48 @@ std::unordered_map<std::string, Item> get_from_get_value_on_root(DBusMessage *ms
     return result;
 }
 
+/**
+ * @brief get_from_properties_changed processes a PropertiesChanged signal into a list of Item, even though it's only one. It allows for passing to
+ * add_dbus_to_mqtt_mapping(...).
+ * @param msg
+ * @return a list of Item, even though it's only one.
+ *
+ * Example signal PropertiesChanged:
+ *
+ * signal time=1691485092.671780 sender=:1.47 -> destination=(null destination) serial=8149 path=/Settings/Pump0/TankService; interface=com.victronenergy.BusItem; member=PropertiesChanged
+ * array [
+ *    dict entry(
+ *       string "Value"
+ *       variant             string "notanksensor"
+ *    )
+ *    dict entry(
+ *       string "Text"
+ *       variant             string "notanksensor"
+ *    )
+ *    dict entry(
+ *       string "Min"
+ *       variant             int32 0
+ *    )
+ *    dict entry(
+ *       string "Max"
+ *       variant             int32 0
+ *    )
+ *    dict entry(
+ *       string "Default"
+ *       variant             string "notanksensor"
+ *    )
+ * ]
+ */
+std::unordered_map<std::string, Item> get_from_properties_changed(DBusMessage *msg)
+{
+    std::unordered_map<std::string, Item> result;
+
+    Item item = Item::from_properties_changed(msg);
+    result[item.get_path()] = item;
+
+    return result;
+}
+
 // TODO: for the basic types, I think I can template this one.
 std::string get_string_from_reply(DBusMessage *msg)
 {

@@ -93,10 +93,13 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
             for (auto &p : items)
             {
                 Item &i = p.second;
+
+                i.set_partial_mapping_details(service);
+
                 flashmq_logf(LOG_DEBUG, "Queueing changed values for '%s' '%s' with value '%s' until we fully know the service.",
                              service.c_str(), i.get_path().c_str(), i.get_value().as_text().c_str());
 
-                delayed_changed_values.emplace_back(service, i.get_path(), i.get_value());
+                delayed_changed_values.emplace_back(i);
             }
 
             return;
@@ -129,50 +132,6 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, uint32_t instan
     dbus_service_items[service][item.get_path()] = item;
 
     if (this->alive || item.should_be_retained())
-        item.publish();
-}
-
-/**
- * @brief State::handle_properties_changed deals with the dbus signal PropertiesChanged.
- * @param msg
- * @param service
- *
- * It has the signature a{sv}: a dict with two keys: 'Value' and 'Text', although you have to assume 'Text' may not be there.
- */
-void State::handle_properties_changed(DBusMessage *msg, const std::string &service)
-{
-    const std::string path = dbus_message_get_path(msg);
-
-    DBusMessageIter iter;
-    dbus_message_iter_init(msg, &iter);
-    DBusMessageIterSignature signature(&iter);
-
-    if (signature.signature != "a{sv}")
-        throw std::runtime_error("Return from GetValue() is not the correct signature");
-
-    VeVariant v(&iter);
-    VeVariant value = v.get_dict_val("Value");
-
-    auto pos = dbus_service_items.find(service);
-    if (pos == dbus_service_items.end())
-    {
-        /*
-         * We may already get PropertiesChanged when a service appears before we fully know the device instance and short name (like :1.33).
-         * In those cases, we have to queue them up to process later.
-         */
-
-        flashmq_logf(LOG_DEBUG, "Queueing PropertiesChanged for '%s' '%s' with value '%s' until we fully know the service.",
-                     service.c_str(), path.c_str(), value.as_text().c_str());
-
-        delayed_changed_values.emplace_back(service, path, value);
-
-        return;
-    }
-
-    Item &item = find_by_service_and_dbus_path(service, path);
-    item.set_value(value);
-
-    if (this->alive)
         item.publish();
 }
 
@@ -258,22 +217,22 @@ void State::attempt_to_process_delayed_changes()
         if (i.age() > std::chrono::seconds(30))
         {
             flashmq_logf(LOG_DEBUG, "Giving up on orphaned PropertiesChanged for '%s' '%s' with value '%s'.",
-                         i.service.c_str(), i.path.c_str(), i.value.as_text().c_str());
+                         i.item.get_service_name().c_str(), i.item.get_path().c_str(), i.item.get_value().as_text().c_str());
             continue;
         }
 
-        auto pos = dbus_service_items.find(i.service);
+        auto pos = dbus_service_items.find(i.item.get_service_name());
         if (pos == dbus_service_items.end())
         {
             delayed_changed_values.push_back(std::move(i));
             continue;
         }
 
-        flashmq_logf(LOG_DEBUG, "Sending queued PropertiesChanged for '%s' '%s' with value '%s'.",
-                     i.service.c_str(), i.path.c_str(), i.value.as_text().c_str());
+        flashmq_logf(LOG_DEBUG, "Sending queued changes for '%s' '%s' with value '%s'.",
+                     i.item.get_service_name().c_str(), i.item.get_path().c_str(), i.item.get_value().as_text().c_str());
 
-        Item &item = find_by_service_and_dbus_path(i.service, i.path);
-        item.set_value(i.value);
+        Item &item = find_matching_active_item(i.item);
+        item.set_value(i.item.get_value());
 
         if (this->alive)
             item.publish();
@@ -696,10 +655,8 @@ bool Watch::empty() const
     return watches.empty();
 }
 
-QueuedChangedItem::QueuedChangedItem(const std::string &service, const std::string &path, const VeVariant &value) :
-    service(service),
-    path(path),
-    value(value)
+QueuedChangedItem::QueuedChangedItem(const Item &item) :
+    item(item)
 {
 
 }

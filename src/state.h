@@ -44,12 +44,10 @@ public:
 
 struct QueuedChangedItem
 {
-    std::string service;
-    std::string path;
-    VeVariant value;
+    Item item;
     std::chrono::time_point<std::chrono::steady_clock> created_at = std::chrono::steady_clock::now();
 
-    QueuedChangedItem(const std::string &service, const std::string &path, const VeVariant &value);
+    QueuedChangedItem(const Item &item);
     std::chrono::seconds age() const;
 };
 
@@ -84,7 +82,6 @@ struct State
     ~State();
     void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
     void add_dbus_to_mqtt_mapping(const std::string &service, uint32_t instance, Item &item);
-    void handle_properties_changed(DBusMessage *msg, const std::string &service);
     const Item &find_item_by_mqtt_path(const std::string &topic) const;
     Item &find_matching_active_item(const Item &item);
     Item &find_by_service_and_dbus_path(const std::string &service, const std::string &dbus_path);

@@ -28,8 +28,10 @@ public:
 
     static Item from_get_items(DBusMessageIter *iter);
     static Item from_get_value(DBusMessageIter *iter);
+    static Item from_properties_changed(DBusMessage *msg);
 
     std::string as_json();
+    void set_partial_mapping_details(const std::string &service);
     void set_mapping_details(const std::string &vrm_id, const std::string &service, uint32_t instance);
     void publish(bool null_payload=false);
     const VeVariant &get_value() const;

@@ -192,6 +192,58 @@ Item Item::from_get_value(DBusMessageIter *iter)
     return item;
 }
 
+/**
+ * @brief Item::from_properties_changed
+ * @param msg
+ * @return
+ *
+ * signal time=1691485092.671780 sender=:1.47 -> destination=(null destination) serial=8149 path=/Settings/Pump0/TankService; interface=com.victronenergy.BusItem; member=PropertiesChanged
+ * array [
+ *    dict entry(
+ *       string "Value"
+ *       variant             string "notanksensor"
+ *    )
+ *    dict entry(
+ *       string "Text"
+ *       variant             string "notanksensor"
+ *    )
+ *    dict entry(
+ *       string "Min"
+ *       variant             int32 0
+ *    )
+ *    dict entry(
+ *       string "Max"
+ *       variant             int32 0
+ *    )
+ *    dict entry(
+ *       string "Default"
+ *       variant             string "notanksensor"
+ *    )
+ * ]
+ */
+Item Item::from_properties_changed(DBusMessage *msg)
+{
+    int msg_type = dbus_message_get_type(msg);
+
+    if (msg_type != DBUS_MESSAGE_TYPE_SIGNAL)
+        throw std::runtime_error("In from_properties_changed: message is not a signal.");
+
+    DBusMessageIter iter;
+    dbus_message_iter_init(msg, &iter);
+
+    const int type = dbus_message_iter_get_arg_type(&iter);
+    if (type != DBUS_TYPE_ARRAY)
+        throw ValueError("Expected array from dbus when constructing item.");
+
+    const std::string path = dbus_message_get_path(msg);
+
+    VeVariant v(&iter);
+    VeVariant value = v.get_dict_val("Value");
+
+    Item item(path, std::move(value));
+    return item;
+}
+
 std::string Item::as_json()
 {
     if (!cache_json.v.empty())
@@ -200,6 +252,11 @@ std::string Item::as_json()
     nlohmann::json j { {"value", value.as_json_value()} };
     cache_json.v = j.dump();
     return cache_json.v;
+}
+
+void Item::set_partial_mapping_details(const std::string &service)
+{
+    this->service_name = service;
 }
 
 void Item::set_mapping_details(const std::string &vrm_id, const std::string &service, uint32_t instance)
@@ -262,7 +319,16 @@ const std::string &Item::get_path() const
 
 const std::string &Item::get_service_name() const
 {
-    return this->service_name.get();
+    const std::string &service = this->service_name.get();
+
+    assert(!service.empty());
+
+    if (service.empty())
+    {
+        flashmq_logf(LOG_WARNING, "Requesting get_service_name() when it's empty. This means 'set_mapping_details()' has not been called and is a bug.");
+    }
+
+    return service;
 }
 
 /**
