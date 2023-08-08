@@ -203,6 +203,8 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
 
         if (msg_type == DBUS_MESSAGE_TYPE_SIGNAL)
         {
+            state->attempt_to_process_delayed_changes();
+
             if (signal_name == "NameAcquired")
             {
                 const char *_name = nullptr;
