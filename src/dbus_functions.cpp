@@ -190,11 +190,12 @@ void dbus_pending_call_notify(DBusPendingCall *pending, void *data) noexcept
 
 DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *message, void *user_data)
 {
+    const char *_signal_name = dbus_message_get_member(message);
+    const std::string signal_name(_signal_name ? _signal_name : "");
+
     try
     {
         State *state = static_cast<State*>(user_data);
-        const char *_signal_name = dbus_message_get_member(message);
-        const std::string signal_name(_signal_name ? _signal_name : "");
         int msg_type = dbus_message_get_type(message);
 
         const char *_sender = dbus_message_get_sender(message);
@@ -272,7 +273,7 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
     }
     catch (std::exception &ex)
     {
-        flashmq_logf(LOG_ERR, "In dbus_handle_message: %s", ex.what());
+        flashmq_logf(LOG_ERR, "On signal '%s' in dbus_handle_message: %s", signal_name.c_str(), ex.what());
         return DBusHandlerResult::DBUS_HANDLER_RESULT_HANDLED;
     }
 
