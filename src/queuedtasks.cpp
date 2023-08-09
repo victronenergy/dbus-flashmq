@@ -1,4 +1,7 @@
 #include "queuedtasks.h"
+
+#include <list>
+
 #include "vendor/flashmq_plugin.h"
 
 bool QueuedTask::operator<(const QueuedTask &rhs) const
@@ -49,6 +52,8 @@ void QueuedTasks::performAll()
     next = std::chrono::time_point<std::chrono::steady_clock>::max();
     const auto now = std::chrono::steady_clock::now();
 
+    std::list<std::function<void()>> copiedTasks;
+
     auto _pos = queuedTasks.begin();
     while (_pos != queuedTasks.end())
     {
@@ -66,15 +71,20 @@ void QueuedTasks::performAll()
         const uint32_t id = t.id;
         queuedTasks.erase(pos);
 
+        auto tpos = tasks.find(id);
+        if (tpos != tasks.end())
+        {
+            auto f = tpos->second;
+            tasks.erase(tpos); // TODO: allow repeatable tasks? It would require more expensive nextId generation.
+            copiedTasks.push_back(f);
+        }
+    }
+
+    for(auto &f : copiedTasks)
+    {
         try
         {
-            auto tpos = tasks.find(id);
-            if (tpos != tasks.end())
-            {
-                auto f = tpos->second;
-                tasks.erase(tpos);
-                f();
-            }
+            f();
         }
         catch (std::exception &ex)
         {
