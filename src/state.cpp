@@ -369,12 +369,37 @@ void State::handle_keepalive(const std::string &payload)
     flashmq_remove_task(this->keep_alive_reset_task_id);
     auto f = std::bind(&State::unset_keepalive, this);
     this->keep_alive_reset_task_id = flashmq_add_task(f, 60000);
+
+    if (!heartbeat_task_id)
+        heartbeat();
 }
 
 void State::unset_keepalive()
 {
     this->alive = false;
     this->keep_alive_reset_task_id = 0;
+}
+
+void State::heartbeat()
+{
+    if (!alive)
+    {
+        heartbeat_task_id = 0;
+        return;
+    }
+
+    std::ostringstream heartbeat_topic;
+    heartbeat_topic << "N/" << unique_vrm_id << "/heartbeat";
+
+    const int64_t unix_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    nlohmann::json j { {"value", unix_time} };
+    std::string payload = j.dump();
+
+    flashmq_publish_message(heartbeat_topic.str(), 0, false, payload);
+
+    auto f = std::bind(&State::heartbeat, this);
+    heartbeat_task_id = flashmq_add_task(f, 3000);
 }
 
 void State::publish_all()

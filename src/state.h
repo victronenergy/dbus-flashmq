@@ -67,6 +67,7 @@ struct State
     bool alive = false;
 
     uint32_t keep_alive_reset_task_id = 0;
+    uint32_t heartbeat_task_id = 0;
 
     int dispatch_event_fd = -1;
     DBusConnection *con = nullptr;
@@ -98,6 +99,7 @@ struct State
     uint32_t store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
     void handle_keepalive(const std::string &payload);
     void unset_keepalive();
+    void heartbeat();
     void publish_all();
     void set_new_id_to_owner(const std::string &owner, const std::string &name);
     std::string get_named_owner(std::string sender) const;
