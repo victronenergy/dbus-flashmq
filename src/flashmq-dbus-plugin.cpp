@@ -81,7 +81,7 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
     // Indicate that the new keepalive mechanism is supported
     std::ostringstream keepalive_topic;
     keepalive_topic << "N/" << state->unique_vrm_id << "/keepalive";
-    flashmq_publish_message(keepalive_topic.str(), 0, true, "1");
+    flashmq_publish_message(keepalive_topic.str(), 0, false, "1");
 }
 
 void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, std::string> &plugin_opts, bool reloading)

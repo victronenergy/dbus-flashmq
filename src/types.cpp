@@ -289,7 +289,7 @@ void Item::publish(bool null_payload)
     const bool retain = should_be_retained();
 
     // Now that we use retain very selectively, never unpublish it.
-    if (!(should_be_retained() && payload.empty()))
+    if (!(retain && payload.empty()))
     {
         // Note that FlashMQ merely appends the packet to the TCP client's output buffer as bytes, and once you return control
         // to the main loop, this buffer is flushed. This is a prerequisite to being fast.
@@ -337,7 +337,7 @@ const std::string &Item::get_service_name() const
  */
 bool Item::should_be_retained() const
 {
-    return (short_service_name.service_type == "system" && path.get() == "/Serial") || path.get() == "/keepalive";
+    return short_service_name.service_type == "system" && path.get() == "/Serial";
 }
 
 
