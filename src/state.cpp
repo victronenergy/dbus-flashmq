@@ -19,6 +19,7 @@
 #include "dbuserrorguard.h"
 #include "exceptions.h"
 #include "dbusmessageitersignature.h"
+#include "dbusmessageiteropencontainerguard.h"
 
 using namespace std;
 
@@ -258,7 +259,7 @@ void State::open()
 
 // TODO: do I have to clean up DBusPendingCall?
 dbus_uint32_t State::call_method(const std::string &service, const std::string &path, const std::string &interface, const std::string &method,
-                                 const std::vector<VeVariant> &args)
+                                 const std::vector<VeVariant> &args, bool wrap_arguments_in_variant)
 {
     DBusMessageGuard msg = dbus_message_new_method_call(service.c_str(), path.c_str(), interface.c_str(), method.c_str());
 
@@ -271,7 +272,16 @@ dbus_uint32_t State::call_method(const std::string &service, const std::string &
     dbus_message_iter_init_append(msg.d, &iter);
     for (const VeVariant &arg : args)
     {
-        arg.append_args_to_dbus_message(&iter);
+        if (wrap_arguments_in_variant)
+        {
+            DBusMessageIterOpenContainerGuard variant_iter(&iter, DBUS_TYPE_VARIANT, arg.get_dbus_type_as_string().c_str());
+            arg.append_args_to_dbus_message(variant_iter.get_array_iter());
+        }
+        else
+        {
+            arg.append_args_to_dbus_message(&iter);
+        }
+
     }
 
     DBusPendingCall *pendingCall = nullptr;
@@ -309,7 +319,7 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
 
     std::vector<VeVariant> args;
     args.push_back(new_value);
-    dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "SetValue", args);
+    dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "SetValue", args, true);
 
     auto set_value_handler = [](State *state, const std::string &topic, DBusMessage *msg) {
         const int msg_type = dbus_message_get_type(msg);

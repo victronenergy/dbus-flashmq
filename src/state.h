@@ -94,7 +94,7 @@ struct State
     void remove_dbus_service(const std::string &service);
     void setDispatchable();
     dbus_uint32_t call_method(const std::string &service, const std::string &path, const std::string &interface, const std::string &method,
-                              const std::vector<VeVariant> &args = std::vector<VeVariant>());
+                              const std::vector<VeVariant> &args = std::vector<VeVariant>(), bool wrap_arguments_in_variant=false);
     void write_to_dbus(const std::string &topic, const std::string &payload);
     uint32_t store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
     void handle_keepalive(const std::string &payload);
