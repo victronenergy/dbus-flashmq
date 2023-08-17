@@ -305,6 +305,8 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
 
     VeVariant new_value(json_value);
 
+    flashmq_logf(LOG_DEBUG, "[Write] Determined dbus type of '%s' as '%s'", json_value.dump().c_str(), new_value.get_dbus_type_as_string().c_str());
+
     std::vector<VeVariant> args;
     args.push_back(new_value);
     dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "SetValue", args);
@@ -315,7 +317,7 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
         if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
         {
             std::string error = dbus_message_get_error_name_safe(msg);
-            flashmq_logf(LOG_ERR, "Error on 'SetValue' on %s", topic.c_str(), error.c_str());
+            flashmq_logf(LOG_ERR, "Error on 'SetValue' on %s: %s", topic.c_str(), error.c_str());
             return;
         }
 
