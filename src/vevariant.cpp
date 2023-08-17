@@ -156,22 +156,7 @@ VeVariant::VeVariant(const char *s) :
  */
 VeVariant::VeVariant(const nlohmann::json &j)
 {
-    if (j.is_number_unsigned())
-    {
-        const dbus_uint64_t v = j.get<dbus_uint64_t>();
-        if (v & 0xFFFFFFFF00000000)
-        {
-            this->u64 = v;
-            this->type = VeVariantType::IntegerUnsigned64;
-        }
-        else
-        {
-            const dbus_uint32_t v = j.get<dbus_uint32_t>();
-            this->u32 = v;
-            this->type = VeVariantType::IntegerUnsigned32;
-        }
-    }
-    else if (j.is_number_integer())
+    if (j.is_number_integer())
     {
         const dbus_int64_t v = j.get<dbus_int64_t>();
         if (v & 0x7FFFFFFF00000000)
