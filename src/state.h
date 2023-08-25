@@ -11,6 +11,7 @@
 #include "types.h"
 #include <thread>
 #include "serviceidentifier.h"
+#include "network.h"
 
 /**
  * @brief The Watch class is not an owner of the watches. DBus itself is.
@@ -81,6 +82,8 @@ struct State
     std::unordered_map<std::string, std::unordered_map<std::string, Item>> dbus_service_items; // keyed by service, then by dbus path, without instance.
     std::vector<QueuedChangedItem> delayed_changed_values;
 
+    std::vector<Network> local_nets;
+
     State();
     ~State();
     void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known, bool force_publish=false);
@@ -109,6 +112,8 @@ struct State
     void remove_id_to_owner(const std::string &owner);
     void handle_read(const std::string &topic);
     void initiate_broker_registration(uint32_t delay);
+
+    bool match_local_net(const struct sockaddr *addr) const;
 };
 
 #endif // STATE_H

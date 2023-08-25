@@ -43,6 +43,9 @@ State::State()
         throw std::runtime_error("Set thread_count to 1 in FlashMQ's config.");
     }
 
+    local_nets.emplace_back("127.0.0.0/8");
+    local_nets.emplace_back("::1/128");
+
     dispatch_event_fd = eventfd(0, EFD_NONBLOCK);
     flashmq_poll_add_fd(dispatch_event_fd, EPOLLIN, std::weak_ptr<void>());
 }
@@ -558,6 +561,11 @@ void State::initiate_broker_registration(uint32_t delay)
 
     auto f = std::bind(register_f, this);
     register_pending_id = flashmq_add_task(f, delay);
+}
+
+bool State::match_local_net(const sockaddr *addr) const
+{
+    return std::any_of(local_nets.begin(), local_nets.end(), [addr](const Network &net){ return net.match(addr);});
 }
 
 void State::scan_all_dbus_services()

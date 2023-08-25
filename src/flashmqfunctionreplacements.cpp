@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "testerglobals.h"
 
@@ -98,4 +99,43 @@ void flashmq_publish_message(const std::string &topic, const uint8_t qos, const 
                              const std::string *responseTopic, const std::string *correlationData, const std::string *contentType)
 {
     std::cout << "DUMMY: " << topic << ": " << payload << std::endl;
+}
+
+/**
+ * @brief flashmq_get_client_address is normally provided by FlashMQ, but for out test binary, we need to mock it, because we have no network clients.
+ * @param client
+ * @param text
+ * @param addr
+ */
+void flashmq_get_client_address(const std::weak_ptr<Client> &client, std::string *text, FlashMQSockAddr *addr)
+{
+    std::shared_ptr<Client> c = client.lock();
+
+    if (!c)
+        return;
+
+    if (text)
+        *text = "dummy-we-dont-know";
+
+    if (addr)
+    {
+        struct sockaddr_in dummy_addr;
+        memset(&dummy_addr, 0, sizeof(struct sockaddr_in));
+
+        inet_pton(AF_INET, "127.0.0.1", &dummy_addr.sin_addr);
+        dummy_addr.sin_family = AF_INET;
+        dummy_addr.sin_port = htons(666);
+
+        memcpy(addr->getAddr(), &dummy_addr, addr->getLen());
+    }
+}
+
+sockaddr *FlashMQSockAddr::getAddr()
+{
+    return reinterpret_cast<struct sockaddr*>(&this->addr_in6);
+}
+
+constexpr int FlashMQSockAddr::getLen()
+{
+    return sizeof(struct sockaddr_in6);
 }
