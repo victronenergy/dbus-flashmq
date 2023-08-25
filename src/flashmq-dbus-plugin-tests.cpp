@@ -4,11 +4,17 @@
 #include "flashmq-dbus-plugin-tests.h"
 #include "vendor/flashmq_plugin.h"
 #include "testerglobals.h"
+#include "utils.h"
 
 #define MAX_EVENTS 25
 
 int main(int argc, char **argv)
 {
+    if (!crypt_match("hallo", "$2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS"))
+    {
+        throw std::runtime_error("crypt test failed.");
+    }
+
     std::unordered_map<std::string, std::string> pluginOpts;
 
     TesterGlobals *globals = TesterGlobals::getInstance();

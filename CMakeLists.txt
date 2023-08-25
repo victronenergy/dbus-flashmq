@@ -38,6 +38,7 @@ add_library(flashmq-dbus-plugin SHARED
   src/fdguard.h src/fdguard.cpp
   src/serviceidentifier.h src/serviceidentifier.cpp
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
+  src/network.h src/network.cpp
 )
 
 add_executable(flashmq-dbus-plugin-tests
@@ -68,14 +69,15 @@ add_executable(flashmq-dbus-plugin-tests
   src/fdguard.h src/fdguard.cpp
   src/serviceidentifier.h src/serviceidentifier.cpp
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
+  src/network.h src/network.cpp
 )
 
 target_include_directories(flashmq-dbus-plugin PUBLIC ${DBUS_INCLUDE_DIRS} .)
 target_include_directories(flashmq-dbus-plugin-tests PUBLIC ${DBUS_INCLUDE_DIRS} .)
 
-target_link_libraries(flashmq-dbus-plugin pthread dbus-1)
+target_link_libraries(flashmq-dbus-plugin pthread dbus-1 resolv crypt)
 
-target_link_libraries(flashmq-dbus-plugin-tests pthread dbus-1)
+target_link_libraries(flashmq-dbus-plugin-tests pthread dbus-1 resolv crypt)
 
 install(TARGETS flashmq-dbus-plugin-tests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS flashmq-dbus-plugin DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/flashmq")
