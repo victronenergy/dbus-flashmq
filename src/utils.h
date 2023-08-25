@@ -36,4 +36,6 @@ T get_random()
     return val;
 }
 
+bool crypt_match(const std::string &phrase, const std::string &crypted);
+
 #endif // UTILS_H
