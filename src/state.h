@@ -12,6 +12,7 @@
 #include <thread>
 #include <optional>
 #include "serviceidentifier.h"
+#include "network.h"
 
 #define VRM_INTEREST_TIMEOUT_SECONDS 130
 #define KEEPALIVE_TOKENS 3
@@ -89,6 +90,8 @@ struct State
     std::chrono::time_point<std::chrono::steady_clock> vrmBridgeInterestTime;
     int keepAliveTokens = KEEPALIVE_TOKENS;
 
+    std::vector<Network> local_nets;
+
     State();
     ~State();
     void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known, bool force_publish=false);
@@ -119,6 +122,7 @@ struct State
     void initiate_broker_registration(uint32_t delay);
     void per_second_action();
     void start_one_second_timer();
+    bool match_local_net(const struct sockaddr *addr) const;
 };
 
 #endif // STATE_H

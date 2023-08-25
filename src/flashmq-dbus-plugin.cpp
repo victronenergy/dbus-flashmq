@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <thread>
+#include <fstream>
 
 #include "state.h"
 #include "utils.h"
@@ -71,7 +72,58 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
 AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
                                       const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
 {
-    return AuthResult::success;
+    State *state = static_cast<State*>(thread_data);
+
+    FlashMQSockAddr addr;
+    memset(&addr, 0, sizeof(FlashMQSockAddr));
+    flashmq_get_client_address(client, nullptr, &addr);
+
+    if (state->match_local_net(addr.getAddr()))
+    {
+        return AuthResult::success;
+    }
+
+    const static std::string vnc_password_file_path = "/data/conf/vncpassword.txt";
+
+    try
+    {
+        if (!std::filesystem::exists(vnc_password_file_path))
+            return AuthResult::login_denied;
+
+        if (std::filesystem::file_size(vnc_password_file_path) == 0)
+            return AuthResult::success;
+
+        std::fstream vnc_password_file(vnc_password_file_path, std::ios::in);
+
+        if (!vnc_password_file)
+        {
+            std::string error_str(strerror(errno));
+            throw std::runtime_error(error_str);
+        }
+
+        std::string vnc_password_crypt;
+
+        if (!getline(vnc_password_file, vnc_password_crypt))
+        {
+            std::string error_str(strerror(errno));
+            throw std::runtime_error(error_str);
+        }
+
+        trim(vnc_password_crypt);
+
+        // The file is normally 0 bytes, but disabling it again makes it 1 byte, with a newline. This is also approved.
+        if (vnc_password_crypt.empty())
+            return AuthResult::success;
+
+        if (crypt_match(password, vnc_password_crypt))
+            return AuthResult::success;
+    }
+    catch (std::exception &ex)
+    {
+        flashmq_logf(LOG_ERR, "Error in trying to read '%s': %s", vnc_password_file_path.c_str(), ex.what());
+    }
+
+    return AuthResult::login_denied;
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,

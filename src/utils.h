@@ -37,5 +37,6 @@ T get_random()
 }
 
 bool client_id_is_bridge(const std::string &clientid);
+bool crypt_match(const std::string &phrase, const std::string &crypted);
 
 #endif // UTILS_H

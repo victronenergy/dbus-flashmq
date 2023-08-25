@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <iostream>
 #include <sys/resource.h>
+#include <crypt.h>
 
 #include "exceptions.h"
 #include "fdguard.h"
@@ -261,12 +262,29 @@ std::string dbus_message_get_error_name_safe(DBusMessage *msg)
     return result;
 }
 
-
 bool client_id_is_bridge(const std::string &clientid)
 {
     return clientid.find("GXdbus_") == 0 || clientid.find("GXrpc_") == 0;
 }
 
+/**
+ * @brief crypt_match uses the system crypt function to match hashed passwords.
+ * @param phrase like 'hallo'
+ * @param crypted like '$2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS'
+ * @return
+ *
+ * Password 'hallo' yields this:
+ * $2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS
+ */
+bool crypt_match(const std::string &phrase, const std::string &crypted)
+{
+    struct crypt_data data;
+    memset(&data, 0, sizeof(struct crypt_data));
+    crypt_r(phrase.c_str(), crypted.c_str(), &data);
+
+    const std::string new_crypt(data.output);
+    return crypted == new_crypt;
+}
 
 
 
