@@ -55,6 +55,7 @@ struct State
 {
     uint32_t register_pending_id = 0;
     bool bridge_connected = false;
+    bool do_online_registration = true;
 
     static std::atomic_int instance_counter;
     std::string unique_vrm_id;

@@ -43,6 +43,13 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
 
     state->get_unique_id();
 
+    // Venus never skips it, but the Docker development env does.
+    auto skip_broker_reg_pos = plugin_opts.find("skip_broker_registration");
+    if (skip_broker_reg_pos != plugin_opts.end() && skip_broker_reg_pos->second == "true")
+    {
+        state->do_online_registration = false;
+    }
+
     state->initiate_broker_registration(0);
 
     state->open();

@@ -496,6 +496,9 @@ void State::handle_read(const std::string &topic)
  */
 void State::initiate_broker_registration(uint32_t delay)
 {
+    if (!do_online_registration)
+        return;
+
     if (register_pending_id > 0)
     {
         flashmq_logf(LOG_WARNING, "Trying to register at VRM while a dbus method request for it is still pending.");
