@@ -169,7 +169,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
     }
     catch (std::exception &ex)
     {
-        flashmq_logf(LOG_ERR, "Error in flashmq_plugin_acl_check: %s", ex.what());
+        flashmq_logf(LOG_ERR, "Error in flashmq_plugin_acl_check when handling '%s': %s", topic.c_str(), ex.what());
     }
 
     return AuthResult::success;
