@@ -255,6 +255,7 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
 
             if (sender.find("com.victronenergy") != std::string::npos)
             {
+                // The preferred signal, containing multiple items. The format is used by both ItemsChanged and the method call GetItems.
                 if (signal_name == "ItemsChanged")
                 {
                     std::unordered_map<std::string, Item> changed_items = get_from_dict_with_dict_with_text_and_value(message);
@@ -263,6 +264,7 @@ DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *m
                     return DBusHandlerResult::DBUS_HANDLER_RESULT_HANDLED;
                 }
 
+                // Will contain the update for only one item.
                 if (signal_name == "PropertiesChanged")
                 {
                     std::unordered_map<std::string, Item> changed_items = get_from_properties_changed(message);

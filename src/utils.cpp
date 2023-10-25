@@ -88,7 +88,7 @@ uint32_t get_instance_from_items(const std::unordered_map<std::string, Item> &it
         const Item &i = p.second;
         if (i.get_path() == "/DeviceInstance")
         {
-            deviceInstance = i.get_value().as_int();
+            deviceInstance = i.get_value().value.as_int();
             break;
         }
     }

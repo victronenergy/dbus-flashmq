@@ -7,6 +7,22 @@
 #include "vendor/json.hpp"
 
 
+ValueMinMax &ValueMinMax::operator=(const ValueMinMax &other)
+{
+    if (this == &other)
+        return *this;
+
+    this->value = other.value;
+
+    // Because a ValueMinMax is also created by signals that may only contain a value dict item, we need to prevent erasing the min/max.
+    if (other.min)
+        this->min = other.min;
+    if (other.max)
+        this->max = other.max;
+
+    return *this;
+}
+
 /**
  * @brief Item::set_path stores the path with a leading slash.
  * @param path
@@ -22,7 +38,7 @@ std::string Item::prefix_path_with_slash(const std::string &path)
     return new_path;
 }
 
-Item::Item(const std::string &path, const VeVariant &&value) :
+Item::Item(const std::string &path, const ValueMinMax &&value) :
     value(std::move(value)),
     path(prefix_path_with_slash(path))
 {
@@ -102,7 +118,7 @@ Item Item::from_get_items(DBusMessageIter *iter)
     DBusMessageIter array_iter;
     dbus_message_iter_recurse(&dict_iter, &array_iter);
 
-    VeVariant value;
+    ValueMinMax value;
 
     int value_type = 0;
     while ((value_type = dbus_message_iter_get_arg_type(&array_iter)) != DBUS_TYPE_INVALID)
@@ -129,7 +145,17 @@ Item Item::from_get_items(DBusMessageIter *iter)
 
         if (key == "Value")
         {
-            value = std::move(val);
+            value.value = std::move(val);
+        }
+
+        if (key == "Max")
+        {
+            value.max = std::move(val);
+        }
+
+        if (key == "Min")
+        {
+            value.min = std::move(val);
         }
 
         dbus_message_iter_next(&array_iter);
@@ -186,9 +212,10 @@ Item Item::from_get_value(DBusMessageIter *iter)
     if (value_type != DBUS_TYPE_VARIANT)
         throw ValueError("Expected array from dbus when constructing item.");
 
-    const VeVariant val = VeVariant(&dict_iter);
+    ValueMinMax val2;
+    val2.value = VeVariant(&dict_iter);
 
-    Item item(path, std::move(val));
+    Item item(path, std::move(val2));
     return item;
 }
 
@@ -238,9 +265,11 @@ Item Item::from_properties_changed(DBusMessage *msg)
     const std::string path = dbus_message_get_path(msg);
 
     VeVariant v(&iter);
-    VeVariant value = v.get_dict_val("Value");
 
-    Item item(path, std::move(value));
+    ValueMinMax v2;
+    v2.value = v.get_dict_val("Value");
+
+    Item item(path, std::move(v2));
     return item;
 }
 
@@ -249,7 +278,13 @@ std::string Item::as_json()
     if (!cache_json.v.empty())
         return cache_json.v;
 
-    nlohmann::json j { {"value", value.as_json_value()} };
+    nlohmann::json j { {"value", value.value.as_json_value()} };
+
+    if (value.min)
+        j["min"] = value.min.as_json_value();
+    if (value.max)
+        j["max"] = value.max.as_json_value();
+
     cache_json.v = j.dump();
     return cache_json.v;
 }
@@ -301,12 +336,12 @@ void Item::publish(bool null_payload)
  * @brief Item::get_value is const and returns on purpose, because this value should only be set through Item::set_value().
  * @return
  */
-const VeVariant &Item::get_value() const
+const ValueMinMax &Item::get_value() const
 {
     return this->value;
 }
 
-void Item::set_value(const VeVariant &val)
+void Item::set_value(const ValueMinMax &val)
 {
     this->cache_json.v.clear();
     this->value = val;

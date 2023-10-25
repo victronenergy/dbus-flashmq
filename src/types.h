@@ -9,9 +9,18 @@
 #include "cachedstring.h"
 #include "boomstring.h"
 
-class Item
+struct ValueMinMax
 {
     VeVariant value;
+    VeVariant min;
+    VeVariant max;
+
+    ValueMinMax &operator=(const ValueMinMax &other);
+};
+
+class Item
+{
+    ValueMinMax value;
     BoomString path; // without instance or service
 
     BoomString vrm_id;
@@ -22,7 +31,7 @@ class Item
     CachedString cache_json;
 
     static std::string prefix_path_with_slash(const std::string &s);
-    Item(const std::string &path, const VeVariant &&value);
+    Item(const std::string &path, const ValueMinMax &&value);
 public:
     Item();
 
@@ -34,8 +43,8 @@ public:
     void set_partial_mapping_details(const std::string &service);
     void set_mapping_details(const std::string &vrm_id, const std::string &service, uint32_t instance);
     void publish(bool null_payload=false);
-    const VeVariant &get_value() const;
-    void set_value(const VeVariant &val);
+    const ValueMinMax &get_value() const;
+    void set_value(const ValueMinMax &val);
     const std::string &get_path() const;
     const std::string &get_service_name() const;
     bool should_be_retained() const;

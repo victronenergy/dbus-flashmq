@@ -88,7 +88,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
                 i.set_partial_mapping_details(service);
 
                 flashmq_logf(LOG_DEBUG, "Queueing changed values for '%s' '%s' with value '%s' until we fully know the service.",
-                             service.c_str(), i.get_path().c_str(), i.get_value().as_text().c_str());
+                             service.c_str(), i.get_path().c_str(), i.get_value().value.as_text().c_str());
 
                 delayed_changed_values.emplace_back(i);
             }
@@ -208,7 +208,7 @@ void State::attempt_to_process_delayed_changes()
         if (i.age() > std::chrono::seconds(30))
         {
             flashmq_logf(LOG_DEBUG, "Giving up on orphaned PropertiesChanged for '%s' '%s' with value '%s'.",
-                         i.item.get_service_name().c_str(), i.item.get_path().c_str(), i.item.get_value().as_text().c_str());
+                         i.item.get_service_name().c_str(), i.item.get_path().c_str(), i.item.get_value().value.as_text().c_str());
             continue;
         }
 
@@ -220,7 +220,7 @@ void State::attempt_to_process_delayed_changes()
         }
 
         flashmq_logf(LOG_DEBUG, "Sending queued changes for '%s' '%s' with value '%s'.",
-                     i.item.get_service_name().c_str(), i.item.get_path().c_str(), i.item.get_value().as_text().c_str());
+                     i.item.get_service_name().c_str(), i.item.get_path().c_str(), i.item.get_value().value.as_text().c_str());
 
         Item &item = find_matching_active_item(i.item);
         item.set_value(i.item.get_value());
@@ -480,8 +480,11 @@ void State::handle_read(const std::string &topic)
         dbus_message_iter_init(msg, &iter);
         VeVariant answer(&iter);
 
+        ValueMinMax val;
+        val.value = std::move(answer);
+
         Item &real_item = state->find_matching_active_item(item);
-        real_item.set_value(answer);
+        real_item.set_value(val);
         real_item.publish();
     };
 

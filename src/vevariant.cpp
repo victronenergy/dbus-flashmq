@@ -713,6 +713,11 @@ bool VeVariant::operator==(const VeVariant &other) const
     }
 }
 
+VeVariant::operator bool() const
+{
+    return type != VeVariantType::Unknown;
+}
+
 VeVariantType VeVariant::get_type() const
 {
     return type;

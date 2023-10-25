@@ -90,6 +90,7 @@ public:
 
     VeVariant& operator=(const VeVariant &other);
     bool operator==(const VeVariant &other) const;
+    operator bool() const;
     VeVariantType get_type() const;
     std::size_t hash() const;
     VeVariant &operator[](const VeVariant &v);
