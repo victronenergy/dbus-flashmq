@@ -414,6 +414,16 @@ void State::publish_all()
             i.publish();
         }
     }
+
+    std::ostringstream done_topic;
+    done_topic << "N/" << unique_vrm_id << "/full_publish_completed";
+
+    const int64_t unix_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    nlohmann::json j { {"value", unix_time} };
+    std::string payload = j.dump();
+
+    flashmq_publish_message(done_topic.str(), 0, false, payload);
 }
 
 /**
