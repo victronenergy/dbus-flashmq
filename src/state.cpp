@@ -252,6 +252,11 @@ void State::open()
 dbus_uint32_t State::call_method(const std::string &service, const std::string &path, const std::string &interface, const std::string &method,
                                  const std::vector<VeVariant> &args, bool wrap_arguments_in_variant)
 {
+    if (!dbus_validate_path(path.c_str(), nullptr))
+    {
+        throw std::runtime_error("Path '" + path + "' is not valid for method call.");
+    }
+
     DBusMessageGuard msg = dbus_message_new_method_call(service.c_str(), path.c_str(), interface.c_str(), method.c_str());
 
     if (!msg.d)
