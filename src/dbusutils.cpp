@@ -177,7 +177,7 @@ std::unordered_map<std::string, Item> get_from_dict_with_dict_with_text_and_valu
  *   ]
  *
  */
-std::unordered_map<std::string, Item> get_from_get_value_on_root(DBusMessage *msg)
+std::unordered_map<std::string, Item> get_from_get_value_on_root(DBusMessage *msg, const std::string &path_prefix)
 {
     int msg_type = dbus_message_get_type(msg);
 
@@ -220,7 +220,7 @@ std::unordered_map<std::string, Item> get_from_get_value_on_root(DBusMessage *ms
         {
             try
             {
-                Item item = Item::from_get_value(&variant_array_iter);
+                Item item = Item::from_get_value(&variant_array_iter, path_prefix);
                 result[item.get_path()] = item;
             }
             catch (std::exception &er)

@@ -91,6 +91,7 @@ struct State
     void get_unique_id();
     void open();
     void scan_all_dbus_services();
+    void get_value(const std::string &service, const std::string &path);
     void scan_dbus_service(const std::string &service);
     void remove_dbus_service(const std::string &service);
     void setDispatchable();

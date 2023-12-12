@@ -30,13 +30,14 @@ class Item
 
     CachedString cache_json;
 
+    static std::string join_paths_with_slash(const std::string &a, const std::string &b);
     static std::string prefix_path_with_slash(const std::string &s);
     Item(const std::string &path, const ValueMinMax &&value);
 public:
     Item();
 
     static Item from_get_items(DBusMessageIter *iter);
-    static Item from_get_value(DBusMessageIter *iter);
+    static Item from_get_value(DBusMessageIter *iter, const std::string &path_prefix);
     static Item from_properties_changed(DBusMessage *msg);
 
     std::string as_json();

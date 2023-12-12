@@ -20,6 +20,7 @@
 #include "exceptions.h"
 #include "dbusmessageitersignature.h"
 #include "dbusmessageiteropencontainerguard.h"
+#include "exceptions.h"
 
 using namespace std;
 
@@ -167,7 +168,7 @@ const Item &State::find_item_by_mqtt_path(const std::string &topic) const
     auto pos_item = items.find(dbus_like_path);
     if (pos_item == items.end())
     {
-        throw std::runtime_error("Can't find item for " + dbus_like_path);
+        throw ItemNotFound("Can't find item for " + dbus_like_path, full_service, dbus_like_path);
     }
 
     return pos_item->second;
@@ -473,33 +474,40 @@ void State::remove_id_to_owner(const std::string &owner)
  */
 void State::handle_read(const std::string &topic)
 {
-    const Item &item = find_item_by_mqtt_path(topic);
-    dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "GetValue");
+    try
+    {
+        const Item &item = find_item_by_mqtt_path(topic);
+        dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "GetValue");
 
-    auto get_value_handler = [](State *state, const Item &item, DBusMessage *msg) {
-        const int msg_type = dbus_message_get_type(msg);
+        auto get_value_handler = [](State *state, const Item &item, DBusMessage *msg) {
+            const int msg_type = dbus_message_get_type(msg);
 
-        if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
-        {
-            std::string error = dbus_message_get_error_name_safe(msg);
-            flashmq_logf(LOG_ERR, "Error on 'GetValue' from %s: %s", item.get_path().c_str(), error.c_str());
-            return;
-        }
+            if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
+            {
+                std::string error = dbus_message_get_error_name_safe(msg);
+                flashmq_logf(LOG_ERR, "Error on 'GetValue' from %s: %s", item.get_path().c_str(), error.c_str());
+                return;
+            }
 
-        DBusMessageIter iter;
-        dbus_message_iter_init(msg, &iter);
-        VeVariant answer(&iter);
+            DBusMessageIter iter;
+            dbus_message_iter_init(msg, &iter);
+            VeVariant answer(&iter);
 
-        ValueMinMax val;
-        val.value = std::move(answer);
+            ValueMinMax val;
+            val.value = std::move(answer);
 
-        Item &real_item = state->find_matching_active_item(item);
-        real_item.set_value(val);
-        real_item.publish();
-    };
+            Item &real_item = state->find_matching_active_item(item);
+            real_item.set_value(val);
+            real_item.publish();
+        };
 
-    auto handler = std::bind(get_value_handler, this, item, std::placeholders::_1);
-    this->async_handlers[serial] = handler;
+        auto handler = std::bind(get_value_handler, this, item, std::placeholders::_1);
+        this->async_handlers[serial] = handler;
+    }
+    catch (ItemNotFound &info)
+    {
+        get_value(info.service, info.dbus_like_path);
+    }
 }
 
 /**
@@ -565,9 +573,9 @@ void State::scan_all_dbus_services()
     async_handlers[serial] = bla;
 }
 
-void State::scan_dbus_service(const std::string &service)
+void State::get_value(const std::string &service, const std::string &path)
 {
-    auto get_value_handler = [](State *state, const std::string &service, DBusMessage *msg) {
+    auto get_value_handler = [](State *state, const std::string &service, const std::string &path_prefix, DBusMessage *msg) {
         const int msg_type = dbus_message_get_type(msg);
 
         if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
@@ -577,11 +585,18 @@ void State::scan_dbus_service(const std::string &service)
             return;
         }
 
-        std::unordered_map<std::string, Item> items = get_from_get_value_on_root(msg);
+        std::unordered_map<std::string, Item> items = get_from_get_value_on_root(msg, path_prefix);
         state->add_dbus_to_mqtt_mapping(service, items, false);
     };
 
-    auto get_items_handler = [get_value_handler](State *state, const std::string &service, DBusMessage *msg) {
+    dbus_uint32_t serial = this->call_method(service, path, "com.victronenergy.BusItem", "GetValue");
+    auto handler = std::bind(get_value_handler, this, service, path, std::placeholders::_1);
+    this->async_handlers[serial] = handler;
+}
+
+void State::scan_dbus_service(const std::string &service)
+{
+    auto get_items_handler = [](State *state, const std::string &service, DBusMessage *msg) {
         const int msg_type = dbus_message_get_type(msg);
 
         if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
@@ -598,10 +613,7 @@ void State::scan_dbus_service(const std::string &service)
 
                 // TODO: and if this fails, introspect it? For now, we decided to not do this. QWACS is the only thing so far that seems to need it.
 
-                dbus_uint32_t serial = state->call_method(service, "/", "com.victronenergy.BusItem", "GetValue");
-                auto handler = std::bind(get_value_handler, state, service, std::placeholders::_1);
-                state->async_handlers[serial] = handler;
-
+                state->get_value(service, "/");
                 return;
             }
 

@@ -23,6 +23,20 @@ ValueMinMax &ValueMinMax::operator=(const ValueMinMax &other)
     return *this;
 }
 
+
+std::string Item::join_paths_with_slash(const std::string &a, const std::string &b)
+{
+    std::string result = a + "/" + b;
+    char prev = 0;
+    result.erase(std::remove_if(result.begin(), result.end(), [&prev](char c) {
+        if (c == prev && c == '/')
+            return true;
+        prev = c;
+        return false;
+    }), result.end());
+    return result;
+}
+
 /**
  * @brief Item::set_path stores the path with a leading slash.
  * @param path
@@ -190,7 +204,7 @@ Item Item::from_get_items(DBusMessageIter *iter)
  *
  * This one parses one of those inner dict entries to an Item.
  */
-Item Item::from_get_value(DBusMessageIter *iter)
+Item Item::from_get_value(DBusMessageIter *iter, const std::string &path_prefix)
 {
     const int type = dbus_message_iter_get_arg_type(iter);
     if (type != DBUS_TYPE_DICT_ENTRY)
@@ -204,7 +218,7 @@ Item Item::from_get_value(DBusMessageIter *iter)
 
     DBusBasicValue key;
     dbus_message_iter_get_basic(&dict_iter, &key);
-    const std::string path(key.str);
+    const std::string path = join_paths_with_slash(path_prefix, key.str);
 
     dbus_message_iter_next(&dict_iter);
 
