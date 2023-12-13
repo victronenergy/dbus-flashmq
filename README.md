@@ -135,6 +135,14 @@ Normally you do not need to use read requests, because most values are published
 change. For values that don't change often, most notably settings (com.victronenergy.settings on D-Bus),
 you will have to use a read request to retrieve the current value.
 
+You can also do a read request on sub-paths, like `R/<portal ID>/solarcharger/279/Dc`. This results in updates of the underlying paths:
+
+```
+N/<portal ID>/solarcharger/279/Dc/0/Voltage {"value":20.43000030517578}
+N/<portal ID>/solarcharger/279/Dc/0/Current {"value":0.0}
+N/<portal ID>/solarcharger/279/Dc/0/Voltage {"value":20.43000030517578}
+```
+
 Keep-alive
 ----------
 In order to avoid a lot of traffic, a keep-alive mechanism exists. It works slightly differently from dbus-mqtt shipped in earlier versions of Venus.
