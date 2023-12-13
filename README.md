@@ -151,6 +151,8 @@ To activate keep-alive, send a read request to `R/<portal ID>/keepalive` (or the
 
 Keep-alive timeout is 60 seconds. After it expires, `null` values are not published. See the next section about changes in behavior. 
 
+When a keep-alive is received and all topics are published, the last topic will be `N/<portal ID>/full_publish_completed` with a payload like `{"value":1702459522}`. This topic signals that you have received all topics with their values, and can be a trigger for an application, to confirm the picture of system configuration is complete, for instance.
+
 You can specify `{ "keepalive-options" : ["suppress-republish"] }` to forgo sending all topics. If you're merely keeping the installation alive, you can use this to reduce the load and traffic.
 
 For a simple command to activate keep-alive on a Linux system, see the [Notes](#notes) at the end of this section.
