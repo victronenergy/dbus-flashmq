@@ -57,7 +57,7 @@ Unlike the previous Python implementation, this plugin no longer causes messages
 
 Example: suppose we have a PV inverter, which reports a total AC power of 936W. The topic of the MQTT message would be:
 
-	Topic: N/e0ff50a097c0/pvinverter/20/Ac/Power
+	Topic: N/<portal ID>/pvinverter/20/Ac/Power
 	Payload: {"value": 936}
 
 The value 20 in the topic is the device instance which may be different on other systems.
@@ -73,7 +73,7 @@ There are 2 special cases:
 
 If you want a roundup of all devices connected to the CCGX subscribe to this topic:
 
-	N/e0ff50a097c0/+/+/ProductId
+	N/<portal ID>/+/+/ProductId
 
 This also is a convenient way to find out which device instances are used, which comes in handy when there are
 multiple devices of the same type present.
@@ -89,7 +89,7 @@ a N, the topic should start with a W. The payload format is identical.
 Example: on a Hub-4 system we can change the AC-In setpoint with this message:
 
 ```
-Topic: W/e0ff50a097c0/vebus/257/Hub4/L1/AcPowerSetpoint
+Topic: W/<portal ID>/vebus/257/Hub4/L1/AcPowerSetpoint
 Payload: {"value": -200}
 ```
 
@@ -103,7 +103,7 @@ do this is by subscribing to the broker using wildcards.
 For example:
 
 ```
-N/e0ff50a097c0/vebus/+/Hub4/L1/AcPowerSetpoint
+N/<portal ID>/vebus/+/Hub4/L1/AcPowerSetpoint
 ```
 
 will get you the list of all registered Multis/Quattros (=vebus services) which have published
@@ -120,14 +120,14 @@ in the topic are not supported. The payload will be ignored (it's best to keep i
 Example: to retrieve the AC power of our favorite PV inverter we publish:
 
 ```
-Topic: R/e0ff50a097c0/pvinverter/20/Ac/Power
+Topic: R/<portal ID>/pvinverter/20/Ac/Power
 Payload: empty
 ```
 
 The script will reply with this message (make sure you subscribe to it):
 
 ```
-Topic: N/e0ff50a097c0/pvinverter/20/Ac/Power
+Topic: N/<portal ID>/pvinverter/20/Ac/Power
 Payload: {"value": 926}
 ```
 
@@ -147,7 +147,7 @@ Keep-alive
 ----------
 In order to avoid a lot of traffic, a keep-alive mechanism exists. It works slightly differently from dbus-mqtt shipped in earlier versions of Venus.
 
-To activate keep-alive, send a read request to `R/<portal ID>/keepalive` (or the legacy `R/<portal ID>/system/0/Serial`). It will send all topics it has, whether the system is alive or not. This is the replacement for retained messages as used by the Python dbus-mqtt. Because messages are no longer retained, if you are subscribing to a path like `N/e0ff50a097c0/+/+/ProductId` to see all products, you must initiate a keep-alive request afterwards to see the values. See the next section.
+To activate keep-alive, send a read request to `R/<portal ID>/keepalive` (or the legacy `R/<portal ID>/system/0/Serial`). It will send all topics it has, whether the system is alive or not. This is the replacement for retained messages as used by the Python dbus-mqtt. Because messages are no longer retained, if you are subscribing to a path like `N/<portal ID>/+/+/ProductId` to see all products, you must initiate a keep-alive request afterwards to see the values. See the next section.
 
 Keep-alive timeout is 60 seconds. After it expires, `null` values are not published. See the next section about changes in behavior. 
 
@@ -174,7 +174,7 @@ The second change is that selective keep-alive is, at least for now, not support
 An easy way to send a periodic keep-alive message without having to do it
 manually is to run this command in a separate session and/or terminal window:
 
-    while :; do mosquitto_pub  -h 192.168.8.60 -m '' -t 'R/e0ff50a097c0/keepalive'; sleep 5; done
+    while :; do mosquitto_pub  -h 192.168.8.60 -m '' -t 'R/<portal ID>/keepalive'; sleep 5; done
 
 You will need to install the mosquitto client package. On a Debian or Ubuntu
 system this can be done with:
@@ -204,7 +204,7 @@ of that.
 This command will get you the total system consumption:
 
 ```
-mosquitto_sub -v -I myclient_ -c -t 'N/e0ff50a097c0/system/0/Ac/Consumption/Total/Power' -h <broker_url> -u <email> -P <passwd> --cafile venus-ca.crt -p 8883
+mosquitto_sub -v -I myclient_ -c -t 'N/<portal ID>/system/0/Ac/Consumption/Total/Power' -h <broker_url> -u <email> -P <passwd> --cafile venus-ca.crt -p 8883
 ```
 
 You may need the full path to the cert file. On the CCGX it is in
@@ -215,7 +215,7 @@ In case you do not receive the value you expect, please read the keep-alive sect
 If you have Full Control permissions on the VRM site, write requests will also be processed. For example:
 
 ```
-mosquitto_pub -I myclient_ -t 'W/e0ff50a097c0/hub4/0/AcPowerSetpoint' -m '{"value":-100}' -h <broker_url> -u <email> -P <passwd> --cafile venus-ca.crt -p 8883
+mosquitto_pub -I myclient_ -t 'W/<portal ID>/hub4/0/AcPowerSetpoint' -m '{"value":-100}' -h <broker_url> -u <email> -P <passwd> --cafile venus-ca.crt -p 8883
 ```
 
 Again: do not set the retain flag when sending write requests.
