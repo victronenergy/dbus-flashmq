@@ -174,7 +174,10 @@ The second change is that selective keep-alive is, at least for now, not support
 An easy way to send a periodic keep-alive message without having to do it
 manually is to run this command in a separate session and/or terminal window:
 
-    while :; do mosquitto_pub  -h 192.168.8.60 -m '' -t 'R/<portal ID>/keepalive'; sleep 5; done
+```
+( while true; do echo '{ "keepalive-options" : ["suppress-republish"] }'; sleep 10; done) | mosquitto_pub -t 'R/<portal ID>/keepalive' -l -h 192.168.8.60
+
+```
 
 You will need to install the mosquitto client package. On a Debian or Ubuntu
 system this can be done with:
