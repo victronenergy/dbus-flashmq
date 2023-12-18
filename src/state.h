@@ -10,6 +10,7 @@
 #include <atomic>
 #include "types.h"
 #include <thread>
+#include "serviceidentifier.h"
 
 /**
  * @brief The Watch class is not an owner of the watches. DBus itself is.
@@ -76,14 +77,14 @@ struct State
     std::unordered_map<int, std::shared_ptr<Watch>> watches;
     std::unordered_map<std::string, std::string> service_id_to_names; // like 1:31 to com.victronenergy.settings
     std::unordered_map<ShortServiceName, std::string> service_type_and_instance_to_full_service; // like 'solarcharger/258' to 'com.victronenergy.solarcharger.ttyO2'
-    std::unordered_map<std::string, uint32_t> service_names_to_instance; // like 'com.victronenergy.solarcharger.ttyO2' to 258
+    std::unordered_map<std::string, ServiceIdentifier> service_names_to_instance; // like 'com.victronenergy.solarcharger.ttyO2' to 258
     std::unordered_map<std::string, std::unordered_map<std::string, Item>> dbus_service_items; // keyed by service, then by dbus path, without instance.
     std::vector<QueuedChangedItem> delayed_changed_values;
 
     State();
     ~State();
     void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
-    void add_dbus_to_mqtt_mapping(const std::string &service, uint32_t instance, Item &item);
+    void add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifier instance, Item &item);
     const Item &find_item_by_mqtt_path(const std::string &topic) const;
     Item &find_matching_active_item(const Item &item);
     Item &find_by_service_and_dbus_path(const std::string &service, const std::string &dbus_path);
@@ -98,7 +99,7 @@ struct State
     dbus_uint32_t call_method(const std::string &service, const std::string &path, const std::string &interface, const std::string &method,
                               const std::vector<VeVariant> &args = std::vector<VeVariant>(), bool wrap_arguments_in_variant=false);
     void write_to_dbus(const std::string &topic, const std::string &payload);
-    uint32_t store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
+    ServiceIdentifier store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
     void handle_keepalive(const std::string &payload);
     void unset_keepalive();
     void heartbeat();

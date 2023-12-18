@@ -6,11 +6,11 @@
 #include "exceptions.h"
 #include "utils.h"
 
-std::string ShortServiceName::get_value(const std::string &service, uint32_t instance)
+std::string ShortServiceName::get_value(const std::string &service, ServiceIdentifier instance)
 {
     std::string short_name = make_short(service);
     std::ostringstream o;
-    o << short_name << '/' << instance;
+    o << short_name << '/' << instance.getValue();
     return std::string(o.str());
 }
 
@@ -29,7 +29,7 @@ std::string ShortServiceName::make_short(std::string service)
     return service;
 }
 
-ShortServiceName::ShortServiceName(const std::string &service, uint32_t instance) :
+ShortServiceName::ShortServiceName(const std::string &service, ServiceIdentifier instance) :
     std::string(get_value(service, instance)),
     service_type(make_short(service))
 {

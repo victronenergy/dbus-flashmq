@@ -42,7 +42,7 @@ public:
 
     std::string as_json();
     void set_partial_mapping_details(const std::string &service);
-    void set_mapping_details(const std::string &vrm_id, const std::string &service, uint32_t instance);
+    void set_mapping_details(const std::string &vrm_id, const std::string &service, ServiceIdentifier instance);
     void publish(bool null_payload=false);
     const ValueMinMax &get_value() const;
     void set_value(const ValueMinMax &val);

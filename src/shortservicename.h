@@ -3,15 +3,16 @@
 
 #include <string>
 #include <stdint.h>
+#include "serviceidentifier.h"
 
 
 class ShortServiceName : public std::string
 {
-    static std::string get_value(const std::string &service, uint32_t instance);
+    static std::string get_value(const std::string &service, ServiceIdentifier instance);
     static std::string make_short(std::string service);
 public:
     std::string service_type;
-    ShortServiceName(const std::string &service, uint32_t instance);
+    ShortServiceName(const std::string &service, ServiceIdentifier instance);
     ShortServiceName();
 };
 

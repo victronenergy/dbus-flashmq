@@ -308,7 +308,7 @@ void Item::set_partial_mapping_details(const std::string &service)
     this->service_name = service;
 }
 
-void Item::set_mapping_details(const std::string &vrm_id, const std::string &service, uint32_t instance)
+void Item::set_mapping_details(const std::string &vrm_id, const std::string &service, ServiceIdentifier instance)
 {
     ShortServiceName short_service_name(service, instance);
 

@@ -98,7 +98,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
         }
     }
 
-    uint32_t device_instance = store_and_get_instance_from_service(service, items, instance_must_be_known);
+    ServiceIdentifier device_instance = store_and_get_instance_from_service(service, items, instance_must_be_known);
 
     ShortServiceName s(service, device_instance);
     this->service_type_and_instance_to_full_service[s] = service;
@@ -118,7 +118,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
  * @param instance The instance number.
  * @param item.
  */
-void State::add_dbus_to_mqtt_mapping(const std::string &service, uint32_t instance, Item &item)
+void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifier instance, Item &item)
 {
     item.set_mapping_details(unique_vrm_id, service, instance);
     dbus_service_items[service][item.get_path()] = item;
@@ -145,7 +145,7 @@ const Item &State::find_item_by_mqtt_path(const std::string &topic) const
     const std::string &short_service = parts.at(2);
     const std::string &instance_str = parts.at(3);
     const std::string &dbus_like_path = "/" + parts.at(4);
-    uint32_t instance = std::stoi(instance_str);
+    ServiceIdentifier instance(instance_str);
     ShortServiceName short_service_name(short_service, instance);
 
     auto pos_service = this->service_type_and_instance_to_full_service.find(short_service_name);
@@ -334,9 +334,9 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
     this->async_handlers[serial] = handler;
 }
 
-uint32_t State::store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known)
+ServiceIdentifier State::store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known)
 {
-    uint32_t device_instance = 0;
+    ServiceIdentifier device_instance;
     auto pos = this->service_names_to_instance.find(service);
     if (pos == this->service_names_to_instance.end())
     {

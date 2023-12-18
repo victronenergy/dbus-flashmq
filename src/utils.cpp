@@ -79,7 +79,7 @@ std::string get_uid_from_topic(const std::vector<std::string> &subtopics)
     return std::string();
 }
 
-uint32_t get_instance_from_items(const std::unordered_map<std::string, Item> &items)
+ServiceIdentifier get_instance_from_items(const std::unordered_map<std::string, Item> &items)
 {
     uint32_t deviceInstance = 0;
 
@@ -89,7 +89,17 @@ uint32_t get_instance_from_items(const std::unordered_map<std::string, Item> &it
         if (i.get_path() == "/DeviceInstance")
         {
             deviceInstance = i.get_value().value.as_int();
-            break;
+            return deviceInstance;
+        }
+    }
+
+    for (auto &p : items)
+    {
+        const Item &i = p.second;
+        if (i.get_path() == "/Identifier")
+        {
+            const std::string s = i.get_value().value.as_text();
+            return s;
         }
     }
 
