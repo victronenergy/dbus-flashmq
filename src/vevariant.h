@@ -84,7 +84,8 @@ public:
     nlohmann::json as_json_value() const;
     int as_int() const;
     int get_dbus_type() const;
-    std::string get_dbus_type_as_string() const;
+    std::string get_dbus_type_as_string_flat() const;
+    std::string get_dbus_type_as_string_recursive() const;
     std::string get_contained_type_as_string() const;
     void append_args_to_dbus_message(DBusMessageIter *iter) const;
 

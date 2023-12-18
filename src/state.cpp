@@ -270,7 +270,7 @@ dbus_uint32_t State::call_method(const std::string &service, const std::string &
     {
         if (wrap_arguments_in_variant)
         {
-            DBusMessageIterOpenContainerGuard variant_iter(&iter, DBUS_TYPE_VARIANT, arg.get_dbus_type_as_string().c_str());
+            DBusMessageIterOpenContainerGuard variant_iter(&iter, DBUS_TYPE_VARIANT, arg.get_dbus_type_as_string_recursive().c_str());
             arg.append_args_to_dbus_message(variant_iter.get_array_iter());
         }
         else
@@ -311,7 +311,7 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
 
     VeVariant new_value(json_value);
 
-    flashmq_logf(LOG_DEBUG, "[Write] Determined dbus type of '%s' as '%s'", json_value.dump().c_str(), new_value.get_dbus_type_as_string().c_str());
+    flashmq_logf(LOG_DEBUG, "[Write] Determined dbus type of '%s' as '%s'", json_value.dump().c_str(), new_value.get_dbus_type_as_string_recursive().c_str());
 
     std::vector<VeVariant> args;
     args.push_back(new_value);

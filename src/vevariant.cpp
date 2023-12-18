@@ -206,7 +206,7 @@ VeVariant::VeVariant(const nlohmann::json &j)
 
             this->arr->push_back(std::move(v2));
 
-            contained_array_type_as_string = v2.get_dbus_type_as_string();
+            contained_array_type_as_string = v2.get_dbus_type_as_string_flat();
 
             type_anchored = true;
             last_type = v2.get_dbus_type();
@@ -480,7 +480,7 @@ int VeVariant::get_dbus_type() const
     }
 }
 
-std::string VeVariant::get_dbus_type_as_string() const
+std::string VeVariant::get_dbus_type_as_string_flat() const
 {
     switch (this->type)
     {
@@ -511,6 +511,16 @@ std::string VeVariant::get_dbus_type_as_string() const
     default:
         return DBUS_TYPE_INVALID_AS_STRING;
     }
+}
+
+std::string VeVariant::get_dbus_type_as_string_recursive() const
+{
+    std::string result = get_dbus_type_as_string_flat();
+
+    if (this->type == VeVariantType::Array)
+        result += get_contained_type_as_string();
+
+    return result;
 }
 
 /**
