@@ -121,10 +121,11 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
 void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifier instance, Item &item)
 {
     item.set_mapping_details(unique_vrm_id, service, instance);
-    dbus_service_items[service][item.get_path()] = item;
+    Item &fully_mapped_item = dbus_service_items[service][item.get_path()];
+    fully_mapped_item = item;
 
-    if (this->alive || item.should_be_retained())
-        item.publish();
+    if (this->alive || fully_mapped_item.should_be_retained())
+        fully_mapped_item.publish();
 }
 
 /**
