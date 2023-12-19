@@ -12,7 +12,11 @@ ValueMinMax &ValueMinMax::operator=(const ValueMinMax &other)
     if (this == &other)
         return *this;
 
-    this->value = other.value;
+    // We don't update from uninitialized values. This proved necessary because there are signals that generate incomplete instantations of
+    // this type, of which several are required to complete the picture. So, when we get a signal with only a 'max', we don't want to set
+    // value back to nothing.
+    if (other.value)
+        this->value = other.value;
 
     // Because a ValueMinMax is also created by signals that may only contain a value dict item, we need to prevent erasing the min/max.
     if (other.min)
