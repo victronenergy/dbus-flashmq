@@ -70,7 +70,7 @@ void State::get_unique_id()
  * @param instance_must_be_known When items is a set of items from a signal, the /DeviceInstance is not among them. But when the items
  *        are from a call to GetValue on /, it is. Set this bool to make sure you don't make the wrong assumptions.
  */
-void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_map<std::string, Item> &items, bool instance_must_be_known)
+void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_map<std::string, Item> &items, bool instance_must_be_known, bool force_publish)
 {
     if (instance_must_be_known)
     {
@@ -106,7 +106,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
     for (auto &p : items)
     {
         Item &item = p.second;
-        add_dbus_to_mqtt_mapping(service, device_instance, item);
+        add_dbus_to_mqtt_mapping(service, device_instance, item, force_publish);
     }
 
     attempt_to_process_delayed_changes();
@@ -118,13 +118,13 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
  * @param instance The instance number.
  * @param item.
  */
-void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifier instance, Item &item)
+void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifier instance, Item &item, bool force_publish)
 {
     item.set_mapping_details(unique_vrm_id, service, instance);
     Item &fully_mapped_item = dbus_service_items[service][item.get_path()];
     fully_mapped_item = item;
 
-    if (this->alive || fully_mapped_item.should_be_retained())
+    if (this->alive || fully_mapped_item.should_be_retained() || force_publish)
         fully_mapped_item.publish();
 }
 
@@ -512,7 +512,7 @@ void State::handle_read(const std::string &topic)
     }
     catch (ItemNotFound &info)
     {
-        get_value(info.service, info.dbus_like_path);
+        get_value(info.service, info.dbus_like_path, true);
     }
 }
 
@@ -579,9 +579,9 @@ void State::scan_all_dbus_services()
     async_handlers[serial] = bla;
 }
 
-void State::get_value(const std::string &service, const std::string &path)
+void State::get_value(const std::string &service, const std::string &path, bool force_publish)
 {
-    auto get_value_handler = [](State *state, const std::string &service, const std::string &path_prefix, DBusMessage *msg) {
+    auto get_value_handler = [](State *state, const std::string &service, const std::string &path_prefix, bool force_publish, DBusMessage *msg) {
         const int msg_type = dbus_message_get_type(msg);
 
         if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
@@ -592,11 +592,11 @@ void State::get_value(const std::string &service, const std::string &path)
         }
 
         std::unordered_map<std::string, Item> items = get_from_get_value_on_root(msg, path_prefix);
-        state->add_dbus_to_mqtt_mapping(service, items, false);
+        state->add_dbus_to_mqtt_mapping(service, items, false, force_publish);
     };
 
     dbus_uint32_t serial = this->call_method(service, path, "com.victronenergy.BusItem", "GetValue");
-    auto handler = std::bind(get_value_handler, this, service, path, std::placeholders::_1);
+    auto handler = std::bind(get_value_handler, this, service, path, force_publish, std::placeholders::_1);
     this->async_handlers[serial] = handler;
 }
 

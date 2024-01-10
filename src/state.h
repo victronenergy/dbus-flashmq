@@ -83,8 +83,8 @@ struct State
 
     State();
     ~State();
-    void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known);
-    void add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifier instance, Item &item);
+    void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known, bool force_publish=false);
+    void add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifier instance, Item &item, bool force_publish);
     const Item &find_item_by_mqtt_path(const std::string &topic) const;
     Item &find_matching_active_item(const Item &item);
     Item &find_by_service_and_dbus_path(const std::string &service, const std::string &dbus_path);
@@ -92,7 +92,7 @@ struct State
     void get_unique_id();
     void open();
     void scan_all_dbus_services();
-    void get_value(const std::string &service, const std::string &path);
+    void get_value(const std::string &service, const std::string &path, bool force_publish=false);
     void scan_dbus_service(const std::string &service);
     void remove_dbus_service(const std::string &service);
     void setDispatchable();
