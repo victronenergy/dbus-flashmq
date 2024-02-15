@@ -78,7 +78,7 @@ mosquitto_sub -t 'N/<portal ID>/+/+/ProductId' -h '<ipaddress/hostname>' -v
 And then send a keepalive to refresh all topic values (this is described in more detail in the [keep-alive chapter](#keep-alive) below):
 
 ```sh
-mosquitto_pub -t 'R/<portal ID>>/keepalive' -m '' -h '<ipaddress/hostname>'
+mosquitto_pub -t 'R/<portal ID>/keepalive' -m '' -h '<ipaddress/hostname>'
 ```
 
 This also is a convenient way to find out which device instances are used, which comes in handy when there are
@@ -124,7 +124,7 @@ in the topic are not supported. The payload will be ignored (it's best to keep i
 Example: to retrieve the AC power of our favorite PV inverter we publish (with an empty payload):
 
 ```sh
-mosquitto_sub -v -h '<ipaddress/hostname>' -t 'R/<portal ID>/pvinverter/20/Ac/Power' -m ''
+mosquitto_pub -h '<ipaddress/hostname>' -t 'R/<portal ID>/pvinverter/20/Ac/Power' -m ''
 ```
 
 The Venus device will reply with this message (make sure you subscribe to it):
