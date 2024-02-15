@@ -219,7 +219,7 @@ An easy way to send a periodic keep-alive message without having to do it
 manually is to run this command in a separate session and/or terminal window:
 
 ```sh
-( while true; do echo '{ "keepalive-options" : ["suppress-republish"] }'; sleep 10; done) | mosquitto_pub -t 'R/<portal ID>/keepalive' -l -h '192.168.8.60'
+( first=""; while true; do if [[ -n "$first" ]]; then echo '{ "keepalive-options" : ["suppress-republish"] }'; else echo ""; fi ; first=true; sleep 30; done ) | mosquitto_pub -t 'R/<portal ID>/keepalive' -l -h '192.168.8.60'
 
 ```
 
