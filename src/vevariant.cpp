@@ -159,7 +159,7 @@ VeVariant::VeVariant(const nlohmann::json &j)
     if (j.is_number_integer())
     {
         const dbus_int64_t v = j.get<dbus_int64_t>();
-        if (v & 0x7FFFFFFF00000000)
+        if (v > std::numeric_limits<dbus_int32_t>::max() || v < std::numeric_limits<dbus_int32_t>::min())
         {
             this->i64 = v;
             this->type = VeVariantType::IntegerSigned64;
