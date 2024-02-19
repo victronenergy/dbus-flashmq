@@ -155,9 +155,9 @@ void dbus_pending_call_notify(DBusPendingCall *pending, void *data) noexcept
     }
 
     const DBusMessageGuard msg = dbus_pending_call_steal_reply(pending);
-    const int reply_to = dbus_message_get_reply_serial(msg.d);
+    const dbus_uint32_t reply_to = dbus_message_get_reply_serial(msg.d);
 
-    if (reply_to <= 0)
+    if (reply_to == 0)
     {
         flashmq_logf(LOG_ERR, "Dbus reply could not be matched to antyhing.");
         return;
