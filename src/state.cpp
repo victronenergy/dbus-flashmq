@@ -20,6 +20,7 @@
 #include "exceptions.h"
 #include "dbusmessageitersignature.h"
 #include "dbusmessageiteropencontainerguard.h"
+#include "dbuspendingmessagecallguard.h"
 #include "exceptions.h"
 
 using namespace std;
@@ -281,13 +282,13 @@ dbus_uint32_t State::call_method(const std::string &service, const std::string &
 
     }
 
-    DBusPendingCall *pendingCall = nullptr;
-    dbus_bool_t send_reply_result = dbus_connection_send_with_reply(con, msg.d, &pendingCall, -1);
+    DBusPendingMessageCallGuard pendingCall;
+    dbus_bool_t send_reply_result = dbus_connection_send_with_reply(con, msg.d, &pendingCall.d, -1);
 
-    if (!pendingCall || !send_reply_result)
+    if (!pendingCall.d || !send_reply_result)
         throw std::runtime_error("Tried method call but failed: DBusPendingCall is null or result was false.");
 
-    if (!dbus_pending_call_set_notify(pendingCall, dbus_pending_call_notify, this, nullptr))
+    if (!dbus_pending_call_set_notify(pendingCall.d, dbus_pending_call_notify, this, nullptr))
     {
         throw std::runtime_error("dbus_pending_call_set_notify returned false.");
     }

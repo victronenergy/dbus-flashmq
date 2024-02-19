@@ -37,6 +37,7 @@ add_library(flashmq-dbus-plugin SHARED
   src/boomstring.h src/boomstring.cpp
   src/fdguard.h src/fdguard.cpp
   src/serviceidentifier.h src/serviceidentifier.cpp
+  src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
 )
 
 add_executable(flashmq-dbus-plugin-tests
@@ -66,6 +67,7 @@ add_executable(flashmq-dbus-plugin-tests
   src/boomstring.h src/boomstring.cpp
   src/fdguard.h src/fdguard.cpp
   src/serviceidentifier.h src/serviceidentifier.cpp
+  src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
 )
 
 target_include_directories(flashmq-dbus-plugin PUBLIC ${DBUS_INCLUDE_DIRS} .)
