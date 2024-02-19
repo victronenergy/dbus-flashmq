@@ -231,7 +231,15 @@ void flashmq_plugin_poll_event_received(void *thread_data, int fd, uint32_t even
 
         if (!dbus_watch_handle(watch, match_flags))
         {
-            flashmq_logf(LOG_WARNING, "dbus_watch_handle() returns false, so is out of memory.");
+            // If we don't exit here, the logs are spammed with errors and we likely won't recover.
+            flashmq_logf(LOG_WARNING, "dbus_watch_handle() returns false, so is out of memory. Exiting, because there's nothing else to do.");
+
+            // The FlashMQ log writer is an async thread and we have no control or info over its commit status. Because we do want to see stuff
+            // in the log, sleeping a bit...
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            // Not exit(), because we don't want to call destructors and stuff.
+            abort();
         }
     }
 }
