@@ -250,7 +250,6 @@ void State::open()
     this->setDispatchable();
 }
 
-// TODO: do I have to clean up DBusPendingCall?
 dbus_uint32_t State::call_method(const std::string &service, const std::string &path, const std::string &interface, const std::string &method,
                                  const std::vector<VeVariant> &args, bool wrap_arguments_in_variant)
 {
