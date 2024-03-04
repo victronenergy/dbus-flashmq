@@ -341,7 +341,7 @@ std::string VeVariant::as_text() const
     return result;
 }
 
-nlohmann::json VeVariant::as_json_value() const
+nlohmann::json VeVariant::as_json_value(bool mask) const
 {
     switch (this->type)
     {
@@ -360,7 +360,15 @@ nlohmann::json VeVariant::as_json_value() const
     case VeVariantType::IntegerUnsigned64:
         return u64;
     case VeVariantType::String:
+    {
+        if (mask)
+        {
+            std::string val = str;
+            std::transform(val.begin(), val.end(), val.begin(), [](char c) {return '*';});
+            return val;
+        }
         return str;
+    }
     case VeVariantType::Double:
         return d;
     case VeVariantType::Boolean:

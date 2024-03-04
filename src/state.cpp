@@ -35,6 +35,17 @@ Watch::~Watch()
 State::State()
 {
     /*
+     * In proper Venus releases, this software is always deployed with a version of localsettings that determines whether we do
+     * authentication. But, when developing the plugin on venus versions that don't have that yet, it gets impractical to have
+     * the default to true.
+     */
+#ifndef NDEBUG
+    this->login_auth_protected = false;
+#else
+    this->login_auth_protected = true;
+#endif
+
+    /*
      * FlashMQ's threading model is spreading clients over threads. We only have one, so threads only make things difficult, mainly with
      * dbus. Plus, everything is async, so we don't need threads.
      */
@@ -124,6 +135,26 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifi
     item.set_mapping_details(unique_vrm_id, service, instance);
     Item &fully_mapped_item = dbus_service_items[service][item.get_path()];
     fully_mapped_item = item;
+
+    if (fully_mapped_item.is_pincode())
+        this->bluetooth_pincode = fully_mapped_item.get_value().value.as_text();
+
+    /*
+     * The plan here is that Venus Platform will add this setting, and make it default true or false depending on whether other MQTT settings
+     * already exist. In other words, whether it's a new device or not.
+     *
+     * TODO: confirm this with Jeroen. Also the setting path. I guess how he'll do all this.
+     */
+    if (fully_mapped_item.is_mqtt_auth_setting())
+    {
+        const VeVariant &val = fully_mapped_item.get_value().value;
+
+        // Sane default when type isn't what we expect.
+        if (val.get_type() != VeVariantType::Boolean)
+            this->login_auth_protected = true;
+        else
+            this->login_auth_protected = val.as_int() == 1;
+    }
 
     if (this->alive || fully_mapped_item.should_be_retained() || force_publish)
         fully_mapped_item.publish();

@@ -69,7 +69,37 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
 AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
                                       const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
 {
-    return AuthResult::success;
+    State *state = static_cast<State*>(thread_data);
+
+    if (!state)
+        return AuthResult::error;
+
+    if (!state->login_auth_protected)
+        return AuthResult::success;
+
+    if (state->bluetooth_pincode.empty())
+    {
+        flashmq_logf(LOG_ERR, "We were not (yet) able to retrieve the bluetooth PIN code, so rejecting login from user '%s'.", username.c_str());
+        return AuthResult::error;
+    }
+
+    if (state->bluetooth_pincode == "000000")
+        return AuthResult::success;
+
+    /*
+     * FlashMQ will be configured to allow empty usernames, but then you get into the weird terrority of allowing anynomous users with
+     * a password. This situation is confusing in the logs for one, so forcing the presence of a username.
+     */
+    if (username.empty())
+    {
+        flashmq_logf(LOG_ERR, "Username is empty. When doing authentication, username can be anything, but it is required.");
+        return AuthResult::login_denied;
+    }
+
+    if (state->bluetooth_pincode == password)
+        return AuthResult::success;
+
+    return AuthResult::login_denied;
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,

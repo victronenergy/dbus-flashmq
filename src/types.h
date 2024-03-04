@@ -49,6 +49,8 @@ public:
     const std::string &get_path() const;
     const std::string &get_service_name() const;
     bool should_be_retained() const;
+    bool is_pincode() const;
+    bool is_mqtt_auth_setting() const;
 };
 
 #endif // TYPES_H

@@ -81,7 +81,7 @@ public:
     VeVariant(const char *s);
     VeVariant(const nlohmann::json &j);
     std::string as_text() const;
-    nlohmann::json as_json_value() const;
+    nlohmann::json as_json_value(bool mask=false) const;
     int as_int() const;
     int get_dbus_type() const;
     std::string get_dbus_type_as_string_flat() const;
