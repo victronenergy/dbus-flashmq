@@ -292,6 +292,15 @@ def _get_vrm_broker_url(self):
     return "mqtt{}.victronenergy.com".format(broker_index)
 ```
 
+### On-line server wildcard subscription limitation
+
+In the near future, the internet MQTT servers will no longer grant very wide subscriptions, such as `#`, `N/#` or `N/+/system/0/Ac/ConsumptionOnOutput/L1/Power`. Instead, subscriptions have to be placed per installation, like `N/<portal ID>/#`, or `N/<portal ID>/system/0/Ac/ConsumptionOnOutput/+/Power`.
+
+The reason is that wildcard subscriptions incur a very high load on the servers. If clients ask for every single message, every single message will have to be validated against the permissions of the client in question. This easily multiplies to an excessive degree.
+
+To find out to which installations you need to subscribe to, you can use the [VRM API](https://vrm-api-docs.victronenergy.com/#/operations/users/idUser/installations). You can periodically query that to find out what installations you need to monitor, and have your MQTT client send subscriptions to the server.
+
+It doesn't matter that a subscription already exists on the server; if the subscription filter is the same as one you sent before, you won't end-up with duplicate message delivery. So, you don't need to keep track of what you subscribed to, you can just periodically subscribe to `N/<portal ID>/#` for all your installations.
 
 Building
 --------
