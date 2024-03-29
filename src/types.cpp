@@ -296,7 +296,8 @@ std::string Item::as_json()
     if (!cache_json.v.empty())
         return cache_json.v;
 
-    nlohmann::json j { {"value", value.value.as_json_value()} };
+    const bool mask = is_pincode();
+    nlohmann::json j { {"value", value.value.as_json_value(mask)} };
 
     if (value.min)
         j["min"] = value.min.as_json_value();
@@ -391,6 +392,11 @@ const std::string &Item::get_service_name() const
 bool Item::should_be_retained() const
 {
     return short_service_name.service_type == "system" && path.get() == "/Serial";
+}
+
+bool Item::is_pincode() const
+{
+    return short_service_name.service_type == "settings" && path.get() == "/Settings/Ble/Service/Pincode";
 }
 
 
