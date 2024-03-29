@@ -50,6 +50,8 @@ public:
     const std::string &get_service_name() const;
     bool should_be_retained() const;
     bool is_pincode() const;
+    bool is_has_auth_setting() const;
+    bool is_password_crypt() const;
 };
 
 #endif // TYPES_H

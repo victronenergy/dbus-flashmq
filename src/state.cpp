@@ -43,6 +43,19 @@ State::State()
         throw std::runtime_error("Set thread_count to 1 in FlashMQ's config.");
     }
 
+    /*
+     * In proper Venus releases, this software is always deployed with a version of localsettings that determines whether we do
+     * authentication. But, when developing the plugin on venus versions that don't have that yet, it gets impractical to have
+     * the default to true.
+     *
+     * TODO: eventually this can be removed.
+     */
+#ifndef NDEBUG
+    this->login_auth_protected = false;
+#else
+    this->login_auth_protected = true;
+#endif
+
     local_nets.emplace_back("127.0.0.0/8");
     local_nets.emplace_back("::1/128");
 
@@ -127,6 +140,22 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifi
     item.set_mapping_details(unique_vrm_id, service, instance);
     Item &fully_mapped_item = dbus_service_items[service][item.get_path()];
     fully_mapped_item = item;
+
+    if (fully_mapped_item.is_password_crypt())
+    {
+        this->password_crypt = fully_mapped_item.get_value().value.as_text();
+        return; // We don't publish this.
+    }
+    else if (fully_mapped_item.is_has_auth_setting())
+    {
+        const VeVariant &val = fully_mapped_item.get_value().value;
+
+        // Sane default when type isn't what we expect.
+        if (val.get_type() != VeVariantType::Boolean)
+            this->login_auth_protected = true;
+        else
+            this->login_auth_protected = val.as_int() == 1;
+    }
 
     if (this->alive || fully_mapped_item.should_be_retained() || force_publish)
         fully_mapped_item.publish();

@@ -84,6 +84,9 @@ struct State
 
     std::vector<Network> local_nets;
 
+    std::string password_crypt;
+    bool login_auth_protected = true;
+
     State();
     ~State();
     void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known, bool force_publish=false);

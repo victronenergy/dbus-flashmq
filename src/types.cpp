@@ -399,6 +399,30 @@ bool Item::is_pincode() const
     return short_service_name.service_type == "settings" && path.get() == "/Settings/Ble/Service/Pincode";
 }
 
+/**
+ * @brief Shows whether this is the setting that tells us if we have auth or not.
+ * @return
+ *
+ * We decided on one setting, that controls both MQTT and VNC auth.
+ *
+ * The plan here is that Venus Platform will add this setting, and make it default true or false depending on whether
+ * it's a new device or not:
+ *
+ * - New firmware installed on existing device should keep auth disabled if it was disabled.
+ * - New firmware installed on new or factory-reset device should default to auth-enabled.
+ *
+ * TODO: confirm this with Jeroen. Also the setting path.
+ */
+bool Item::is_has_auth_setting() const
+{
+    return short_service_name.service_type == "settings" && path.get() == "/Settings/Services/TODO_authname";
+}
+
+bool Item::is_password_crypt() const
+{
+    return short_service_name.service_type == "settings" && path.get() == "/Settings/Services/TODO_cryptname";
+}
+
 
 
 

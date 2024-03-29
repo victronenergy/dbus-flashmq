@@ -270,6 +270,12 @@ std::string dbus_message_get_error_name_safe(DBusMessage *msg)
  *
  * Password 'hallo' yields this:
  * $2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS
+ *
+ * The PHP-generated 2y version:
+ *
+ * $2y$10$sT7eJjJUHFWw/M5886X3TuhfeT9dSvnQPYXXy9u6nsZh0ChvWsKYy
+ *
+ * is actually compatible. We may need to perform a string-replace.
  */
 bool crypt_match(const std::string &phrase, const std::string &crypted)
 {

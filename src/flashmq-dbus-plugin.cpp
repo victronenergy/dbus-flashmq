@@ -76,52 +76,39 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
     memset(&addr, 0, sizeof(FlashMQSockAddr));
     flashmq_get_client_address(client, nullptr, &addr);
 
+    // Local Venus services, like mqtt-rpc.
     if (state->match_local_net(addr.getAddr()))
     {
         return AuthResult::success;
     }
 
-    const static std::string vnc_password_file_path = "/data/conf/vncpassword.txt";
+    if (!state)
+        return AuthResult::error;
 
-    try
+    if (!state->login_auth_protected)
+        return AuthResult::success;
+
+    if (state->password_crypt.empty())
     {
-        if (!std::filesystem::exists(vnc_password_file_path))
-            return AuthResult::success;
-
-        if (std::filesystem::file_size(vnc_password_file_path) == 0)
-            return AuthResult::success;
-
-        std::fstream vnc_password_file(vnc_password_file_path, std::ios::in);
-
-        if (!vnc_password_file)
-        {
-            std::string error_str(strerror(errno));
-            throw std::runtime_error(error_str);
-        }
-
-        std::string vnc_password_crypt;
-
-        if (!getline(vnc_password_file, vnc_password_crypt))
-        {
-            std::string error_str(strerror(errno));
-            throw std::runtime_error(error_str);
-        }
-
-        trim(vnc_password_crypt);
-
-        // The file is normally 0 bytes, but disabling it again makes it 1 byte, with a newline. This is also approved.
-        if (vnc_password_crypt.empty())
-            return AuthResult::success;
-
-        if (crypt_match(password, vnc_password_crypt))
-            return AuthResult::success;
-    }
-    catch (std::exception &ex)
-    {
-        flashmq_logf(LOG_ERR, "Error in trying to read '%s': %s", vnc_password_file_path.c_str(), ex.what());
+        flashmq_logf(LOG_ERR, "We know auth is required, but haven't seen the crypt hash yet, so rejecting login from user '%s'.", username.c_str());
+        return AuthResult::error;
     }
 
-    return AuthResult::login_denied;
+    /*
+     * FlashMQ will be configured to allow empty usernames, but then you get into the weird terrority of allowing anynomous users with
+     * a password. This situation is confusing in the logs for one, so forcing the presence of a username. Note that at this stage,
+     * we're already past the point of having auth disabled. So this is for when you do have auth, you must have a username.
+     */
+    if (username.empty())
+    {
+        flashmq_logf(LOG_ERR, "Username is empty. When doing authentication, username can be anything, but it is required.");
+        return AuthResult::login_denied;
+    }
+
+    if (crypt_match(password, state->password_crypt))
+        return AuthResult::success;
+
+    return AuthResult::acl_denied;
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
