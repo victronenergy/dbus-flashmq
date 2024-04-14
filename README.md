@@ -239,9 +239,16 @@ Connecting to the VRM MQTT servers
 -------------------------------------
 
 If the MQTT service is enabled, the CCGX will forward all notifications from the GX device to the Victron MQTT
-servers (see the broker URL section for the correct URL). All communication is encrypted using TLS. You can connect to the MQTT
-server using your VRM credentials and subscribe to the notifications sent by your GX device. It is also possible
-to send read and write requests to the GX device. You can only receive notifications from systems in your own VRM
+servers (see the broker URL section for the correct URL). All communication is encrypted using TLS.
+
+There are two ways to authenticate:
+
+- VRM access token.
+- VRM username + password.
+
+The recommended way is to use access tokens. In VRM, you can [manage access tokens here](https://vrm.victronenergy.com/access-tokens). To use them, give your VRM username (email address) as MQTT user, and as password, supply `Token <token>`.
+
+You can subscribe to the notifications sent by your GX device, as well as send read and write requests to it. You can only receive notifications from systems in your own VRM
 site list, and to send write requests you need the 'Full Control' permission. This is the default is you have
 registered the system yourself. The 'Monitor Only' permission allows subscription to notifications only
 (read only access).
