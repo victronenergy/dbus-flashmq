@@ -221,19 +221,9 @@ etc
 
 The previous implementation serialized all the answers as json.
 
-#### 4) Difference between Mosquitto and FlashMQ concerning login
+#### 4) Venus OS v3.20 till v3.30: a difference between Mosquitto and FlashMQ concerning login
 
-There is a difference between how Mosquitto and FlashMQ treat anonymous logins on MQTT. Mosquitto treated the specifications a bit loosely, and accepted an empty username. FlashMQ is more strict, and if during login the client says that there is a username, it also expects one. And if there is none, it refuses to connect.
-
-On some clients and implementations that works fine; but - as clear now - there are also implementations on which that gives a problem. What you see then is that the software you're using is unable to connect. If you'd look in the logs on the GX device, you'd see this:
-
-```
-[ERROR] Unspecified or non-MQTT protocol error: Username flagged as present, but it's 0 bytes.. Removing client.
-```
-
-To work around this, configure a username and password in the MQTT software you are using. Then FlashMQ will accept the connection, even though there is no username or password required.
-
-Note that that workaround does *not* require you to login to the GX command line and make changes there.
+Venus OS v3.20, v3.21 and v3.22 caused a connection issue for some MQTT clients. This was solved in Venus OS v3.31. For details, see https://github.com/victronenergy/venus/issues/1257. 
 
 Connecting to the VRM MQTT servers
 -------------------------------------
