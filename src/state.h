@@ -55,7 +55,7 @@ struct QueuedChangedItem
 struct State
 {
     uint32_t register_pending_id = 0;
-    bool bridge_connected = false;
+    std::map<std::string, bool> bridges_connected;
     bool do_online_registration = true;
 
     static std::atomic_int instance_counter;

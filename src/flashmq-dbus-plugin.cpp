@@ -137,20 +137,28 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             }
             else if (action == "$SYS" && subtopics.size() >= 5)
             {
-                // Deal with bridge notifications like $SYS/broker/bridge/GXdbus/connected
+                /*
+                 * Deal with bridge notifications like $SYS/broker/bridge/GXdbus/connected
+                 *
+                 * Disconnection is a good time to re-register ourselves on VRM, because there is a small chance our
+                 * registration has been reset by the user at some point in the past, which would only be seen when
+                 * making a new connection.
+                 */
 
                 const std::string &bridgeName = subtopics.at(3);
                 const std::string payload_str(payload);
 
                 if ((bridgeName == "GXdbus" || bridgeName == "GXrpc"))
                 {
+                    bool &connected = state->bridges_connected[bridgeName];
+
                     if (payload_str == "1")
                     {
-                        state->bridge_connected = true;
+                        connected = true;
                     }
-                    else if (state->bridge_connected && payload_str == "0" && state->register_pending_id == 0)
+                    else if (connected && payload_str == "0" && state->register_pending_id == 0)
                     {
-                        state->bridge_connected = false;
+                        connected = false;
 
                         /*
                          * Note that for the majority of users, this re-registration is not needed and it will just reconnect. We need to do it
