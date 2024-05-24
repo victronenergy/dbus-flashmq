@@ -13,6 +13,8 @@
 #include "serviceidentifier.h"
 
 #define VRM_INTEREST_TIMEOUT_SECONDS 130
+#define KEEPALIVE_TOKENS 3
+#define ONE_SECOND_TIMER_INTERVAL 1000
 
 /**
  * @brief The Watch class is not an owner of the watches. DBus itself is.
@@ -72,6 +74,7 @@ struct State
 
     uint32_t keep_alive_reset_task_id = 0;
     uint32_t heartbeat_task_id = 0;
+    uint32_t period_task_id = 0;
 
     int dispatch_event_fd = -1;
     DBusConnection *con = nullptr;
@@ -83,7 +86,7 @@ struct State
     std::unordered_map<std::string, std::unordered_map<std::string, Item>> dbus_service_items; // keyed by service, then by dbus path, without instance.
     std::vector<QueuedChangedItem> delayed_changed_values;
     std::chrono::time_point<std::chrono::steady_clock> vrmBridgeInterestTime;
-
+    int keepAliveTokens = KEEPALIVE_TOKENS;
 
     State();
     ~State();
@@ -113,6 +116,8 @@ struct State
     void remove_id_to_owner(const std::string &owner);
     void handle_read(const std::string &topic);
     void initiate_broker_registration(uint32_t delay);
+    void per_second_action();
+    void start_one_second_timer();
 };
 
 #endif // STATE_H

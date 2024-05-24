@@ -370,8 +370,8 @@ void State::handle_keepalive(const std::string &payload)
     // Cheating: I don't actually need to parse the json.
     bool suppress_publish_of_all = payload.find("suppress-republish") != std::string::npos;
 
-    // Always do it the first time, whether or not suppression is set.
-    if (!suppress_publish_of_all)
+    // Rate limit keep-alives that cause republish. It's been seen in the field some installations get hundreds at once.
+    if (!suppress_publish_of_all && this->keepAliveTokens-- > 0)
         publish_all();
 
     this->alive = true;
@@ -558,6 +558,25 @@ void State::initiate_broker_registration(uint32_t delay)
 
     auto f = std::bind(register_f, this);
     register_pending_id = flashmq_add_task(f, delay);
+}
+
+void State::per_second_action()
+{
+    this->period_task_id = 0;
+
+    this->keepAliveTokens = KEEPALIVE_TOKENS;
+
+    auto f = std::bind(&State::per_second_action, this);
+    this->period_task_id = flashmq_add_task(f, ONE_SECOND_TIMER_INTERVAL);
+}
+
+void State::start_one_second_timer()
+{
+    if (period_task_id)
+        return;
+
+    auto f = std::bind(&State::per_second_action, this);
+    this->period_task_id = flashmq_add_task(f, ONE_SECOND_TIMER_INTERVAL);
 }
 
 void State::scan_all_dbus_services()

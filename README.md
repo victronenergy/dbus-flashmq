@@ -164,6 +164,7 @@ When a keep-alive is received and all topics are published, the last topic will 
 
 You can specify `{ "keepalive-options" : ["suppress-republish"] }` to forgo sending all topics. Once you have woken up a system and continue to send keep-alives, you don't need a full update on all topics each time, and you can/should include the `suppress-republish` keepalive-option from that point on. A typical implementation would be to put the keep-alive with `{ "keepalive-options" : ["suppress-republish"] }` on a timer, and send keep-alives with empty payload explicitely, when the state of the program requires it.
 
+Note that on recent Venus versions, dbus-flashmq will only do the full republish at most three times per second. This should not impact any normal use case, yet protect against accidental overload.
 
 Here is a simple command to send keep alives from a Linux system:
 
