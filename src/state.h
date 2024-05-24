@@ -12,6 +12,8 @@
 #include <thread>
 #include "serviceidentifier.h"
 
+#define VRM_INTEREST_TIMEOUT_SECONDS 130
+
 /**
  * @brief The Watch class is not an owner of the watches. DBus itself is.
  *
@@ -80,6 +82,8 @@ struct State
     std::unordered_map<std::string, ServiceIdentifier> service_names_to_instance; // like 'com.victronenergy.solarcharger.ttyO2' to 258
     std::unordered_map<std::string, std::unordered_map<std::string, Item>> dbus_service_items; // keyed by service, then by dbus path, without instance.
     std::vector<QueuedChangedItem> delayed_changed_values;
+    std::chrono::time_point<std::chrono::steady_clock> vrmBridgeInterestTime;
+
 
     State();
     ~State();

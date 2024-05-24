@@ -36,4 +36,6 @@ T get_random()
     return val;
 }
 
+bool client_id_is_bridge(const std::string &clientid);
+
 #endif // UTILS_H

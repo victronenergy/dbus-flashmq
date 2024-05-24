@@ -262,6 +262,11 @@ std::string dbus_message_get_error_name_safe(DBusMessage *msg)
 }
 
 
+bool client_id_is_bridge(const std::string &clientid)
+{
+    return clientid.find("GXdbus_") == 0 || clientid.find("GXrpc_") == 0;
+}
+
 
 
 

@@ -99,10 +99,10 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
         if (subtopics.size() < 2)
             return AuthResult::success;
 
+        const std::string &action = subtopics.at(0);
+
         if (access == AclAccess::write)
         {
-            const std::string &action = subtopics.at(0);
-
             // Wo only work on strings like R/<portalid>/system/0/Serial.
             if (action == "W" || action == "R")
             {
@@ -113,6 +113,13 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                     flashmq_logf(LOG_ERR, "We received a request for '%s', but that's not us (%s)", system_id.c_str(), state->unique_vrm_id.c_str());
                     return AuthResult::success;
                 }
+
+                /*
+                 * Because we also need to respond to reads and writes from remote clients when the system is not alive, we need
+                 * to consider any AclAccess::write activity as interest.
+                 */
+                if (client_id_is_bridge(clientid))
+                    state->vrmBridgeInterestTime = std::chrono::steady_clock::now();
 
                 // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
                 if (action == "W")
@@ -173,6 +180,21 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                     }
                 }
             }
+        }
+        else if (access == AclAccess::read)
+        {
+            // We only limit our own N (notifications), to avoid accidentally denying other things.
+            if (action != "N")
+                return AuthResult::success;
+
+            // We still allow normal cross-client behavior when it's all on LAN.
+            if (!client_id_is_bridge(clientid))
+                return AuthResult::success;
+
+            if (std::chrono::steady_clock::now() > state->vrmBridgeInterestTime + std::chrono::seconds(VRM_INTEREST_TIMEOUT_SECONDS))
+                return AuthResult::acl_denied;
+
+            return AuthResult::success;
         }
     }
     catch (std::exception &ex)
