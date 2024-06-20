@@ -355,7 +355,12 @@ ServiceIdentifier State::store_and_get_instance_from_service(const std::string &
 
 /**
  * @brief Keeps the installation actively publishing changes to MQTT.
- * @param payload options, like: { "keepalive-options" : ["suppress-republish"] }
+ * @param payload options.
+ *
+ * Options are like:
+ *
+ *  { "keepalive-options" : [ "suppress-republish" ] }
+ *  { "keepalive-options" : [ {"full-publish-completed-echo": "B9FMlGWoCcfMKc" } ] }
  *
  * The payload was previsouly used for selecting only certain topics. We are probably not going to support that functionality. But
  * Note that that format was an array of topics, not a dict with keys. That kind of limited supporting other things with it. That's why
@@ -364,6 +369,11 @@ ServiceIdentifier State::store_and_get_instance_from_service(const std::string &
  * Suppressing the publication of all topics can be done by those clients that understand we no longer use retained messages. By defaulting
  * to publishing all on getting a keep-alive, you can be sure you receive all topics, whether you are the first, second, third, watcher on
  * an already alive installation.
+ *
+ * The 'full-publish-completed-echo' can be used to tell identify the 'N/<portalid>/full_publish_completed' topic as yours. This is to
+ * deal with multiple concurrent clients. It will come back like:
+ *
+ *   N/<portalid>/full_publish_completed {"full-publish-completed-echo":"B9FMlGWoCcfMKc","value":1718860914}
  */
 void State::handle_keepalive(const std::string &payload)
 {
@@ -372,7 +382,35 @@ void State::handle_keepalive(const std::string &payload)
 
     // Rate limit keep-alives that cause republish. It's been seen in the field some installations get hundreds at once.
     if (!suppress_publish_of_all && this->keepAliveTokens-- > 0)
-        publish_all();
+    {
+        std::optional<std::string> payload_echo;
+
+        try
+        {
+            if (!payload.empty())
+            {
+                nlohmann::json j = nlohmann::json::parse(payload);
+                nlohmann::json options = j["keepalive-options"];
+
+                if (options.is_array())
+                {
+                    for (nlohmann::json &el : options)
+                    {
+                        if (el.is_object())
+                        {
+                            payload_echo = el["full-publish-completed-echo"];
+                        }
+                    }
+                }
+            }
+        }
+        catch (nlohmann::json::exception &ex)
+        {
+            flashmq_logf(LOG_DEBUG, "Failure parsing keepalive options: %s", ex.what());
+        }
+
+        publish_all(payload_echo);
+    }
 
     this->alive = true;
     flashmq_remove_task(this->keep_alive_reset_task_id);
@@ -411,7 +449,7 @@ void State::heartbeat()
     heartbeat_task_id = flashmq_add_task(f, 3000);
 }
 
-void State::publish_all()
+void State::publish_all(const std::optional<std::string> &payload_echo)
 {
     for (auto &p : dbus_service_items)
     {
@@ -427,7 +465,13 @@ void State::publish_all()
 
     const int64_t unix_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-    nlohmann::json j { {"value", unix_time} };
+    nlohmann::json j { {"value", unix_time } };
+
+    if (payload_echo)
+    {
+        j["full-publish-completed-echo"] = payload_echo.value();
+    }
+
     std::string payload = j.dump();
 
     flashmq_publish_message(done_topic.str(), 0, false, payload);

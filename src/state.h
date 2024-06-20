@@ -110,7 +110,7 @@ struct State
     void handle_keepalive(const std::string &payload);
     void unset_keepalive();
     void heartbeat();
-    void publish_all();
+    void publish_all(const std::optional<std::string> &payload_echo);
     void set_new_id_to_owner(const std::string &owner, const std::string &name);
     std::string get_named_owner(std::string sender) const;
     void remove_id_to_owner(const std::string &owner);
