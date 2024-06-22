@@ -77,7 +77,24 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
                                   std::string_view payload, uint8_t &qos, bool &retain, std::vector<std::pair<std::string, std::string>> *userProperties)
 {
-    if (retain)
+    State *state = static_cast<State*>(thread_data);
+
+    if (!state)
+        return false;
+
+    if (subtopics.size() < 2)
+        return false;
+
+    /*
+     * This matches the 'publish' lines in /data/conf/flashmq.d/vrm_bridge.conf. It should/can also never happen
+     * in practice on Venus. However, we're making sure that:
+     *
+     * 1) The internet MQTT servers are never given a retained message, even if we receive a stray retained message
+     *    from a local client that matches one of our own topic paths.
+     * 2) We don't touch other topics that don't involve us, so the MQTT server on Venus can be used for non-Venus
+     *    things in a network.
+     */
+    if (retain && (subtopics.at(0) == "N" || subtopics.at(0) == "P" ) && subtopics.at(1) == state->unique_vrm_id)
     {
         retain = false;
         return true;
