@@ -157,7 +157,6 @@ bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid
 
 /**
  * @brief using ACL hook as 'on_message' handler.
- * @return We always return 'success', otherwise the message is blocked, and you wouldn't see it with any connecting subscriber.
  */
 AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, const std::string &clientid, const std::string &username,
                                     const std::string &topic, const std::vector<std::string> &subtopics, std::string_view payload,
@@ -174,6 +173,16 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
 
         if (access == AclAccess::write)
         {
+            /*
+             * We also block P/<portalid>/in for safety, but that should already be covered by not having
+             * a bridge connection for RPC.
+             */
+            if (action == "W" || (action == "P" && subtopics.size() >= 3 && subtopics.at(2) == "in"))
+            {
+                if (client_id_is_bridge(clientid) && state->vrm_portal_mode != VrmPortalMode::Full)
+                    return AuthResult::acl_denied;
+            }
+
             // Wo only work on strings like R/<portalid>/system/0/Serial.
             if (action == "W" || action == "R")
             {

@@ -128,6 +128,11 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifi
     Item &fully_mapped_item = dbus_service_items[service][item.get_path()];
     fully_mapped_item = item;
 
+    if (fully_mapped_item.is_vrm_portal_mode())
+    {
+        this->vrm_portal_mode = parseVrmPortalMode(fully_mapped_item.get_value().value.as_int());
+    }
+
     if (this->alive || fully_mapped_item.should_be_retained() || force_publish)
         fully_mapped_item.publish();
 }

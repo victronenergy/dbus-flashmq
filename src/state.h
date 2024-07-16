@@ -67,6 +67,8 @@ struct State
     static std::atomic_int instance_counter;
     std::string unique_vrm_id;
 
+    VrmPortalMode vrm_portal_mode = VrmPortalMode::Unknown;
+
     /*
      * TODO: Maybe implement the selective keep-alive mechanism like dbus-mqtt had.
      *

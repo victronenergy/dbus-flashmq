@@ -9,6 +9,14 @@
 #include "cachedstring.h"
 #include "boomstring.h"
 
+enum class VrmPortalMode
+{
+    Unknown,
+    Off,
+    ReadOnly,
+    Full
+};
+
 struct ValueMinMax
 {
     VeVariant value;
@@ -50,6 +58,7 @@ public:
     const std::string &get_service_name() const;
     bool should_be_retained() const;
     bool is_pincode() const;
+    bool is_vrm_portal_mode() const;
 };
 
 #endif // TYPES_H

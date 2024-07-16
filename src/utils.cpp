@@ -287,6 +287,22 @@ bool crypt_match(const std::string &phrase, const std::string &crypted)
 }
 
 
+VrmPortalMode parseVrmPortalMode(int val)
+{
+    switch(val)
+    {
+    case(0):
+        return VrmPortalMode::Off;
+    case(1):
+        return VrmPortalMode::ReadOnly;
+    case(2):
+        return VrmPortalMode::Full;
+    default:
+        return VrmPortalMode::Unknown;
+    }
+}
+
+
 
 
 
