@@ -10,6 +10,7 @@
 #include <atomic>
 #include "types.h"
 #include <thread>
+#include <optional>
 #include "serviceidentifier.h"
 
 #define VRM_INTEREST_TIMEOUT_SECONDS 130
