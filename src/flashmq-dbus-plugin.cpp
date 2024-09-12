@@ -367,8 +367,8 @@ void flashmq_plugin_poll_event_received(void *thread_data, int fd, uint32_t even
     if (!w || w->empty())
         return;
 
-    // I choose to let this function spin in case we are out of memory (i.e. not do anything). Otherwise I run the risk of
-    // taking the fd out of epoll and not adding it again. And the DBusWatch logic is weird enough to deal with.
+    // Since the process is supervised, just exit if there are major problems like running
+    // out of memory.
 
     /*
      * See the 'Watch' object class doc for the reasoning behind this.
