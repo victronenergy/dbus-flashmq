@@ -46,6 +46,9 @@ State::State()
     local_nets.emplace_back("127.0.0.0/8");
     local_nets.emplace_back("::1/128");
 
+    bridge_connection_states[BRIDGE_DBUS].msg = "pending";
+    bridge_connection_states[BRIDGE_RPC].msg = "pending";
+
     dispatch_event_fd = eventfd(0, EFD_NONBLOCK);
     flashmq_poll_add_fd(dispatch_event_fd, EPOLLIN, std::weak_ptr<void>());
 }
@@ -131,6 +134,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifi
     if (fully_mapped_item.is_vrm_portal_mode())
     {
         this->vrm_portal_mode = parseVrmPortalMode(fully_mapped_item.get_value().value.as_int());
+        this->write_all_bridge_connection_states_debounced();
     }
 
     if (this->alive || fully_mapped_item.should_be_retained() || force_publish)
@@ -636,6 +640,109 @@ bool State::match_local_net(const sockaddr *addr) const
     return std::any_of(local_nets.begin(), local_nets.end(), [addr](const Network &net){ return net.match(addr);});
 }
 
+void State::write_bridge_connection_state(const std::string &bridge, const std::optional<bool> connected, const std::string &msg)
+{
+    auto answer_handler = [](State *state, const std::string &path, DBusMessage *msg) {
+        const int msg_type = dbus_message_get_type(msg);
+
+        if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
+        {
+            std::string error = dbus_message_get_error_name_safe(msg);
+            flashmq_logf(LOG_ERR, "Error on SetValue on '%s': %s", path.c_str(), error.c_str());
+            return;
+        }
+    };
+
+    const std::string bool_val_for_log = connected.has_value() ? std::to_string(connected.value()) : "null";
+    flashmq_logf(LOG_NOTICE, "Setting bridge connection status of %s to %s (%s).",
+                 bridge.c_str(), bool_val_for_log.c_str(), msg.c_str());
+
+    {
+        VeVariant bool_variant(connected);
+
+        const std::string path = "/Mqtt/Bridges/" + bridge + "/Connected";
+        const dbus_uint32_t serial = call_method(
+                    "com.victronenergy.platform",
+                    path,
+                    "com.victronenergy.platform",
+                    "SetValue", {bool_variant}, true);
+
+        auto handler = std::bind(answer_handler, this, path, std::placeholders::_1);
+        this->async_handlers[serial] = handler;
+    }
+
+    {
+        VeVariant msg_variant(msg);
+
+        const std::string path = "/Mqtt/Bridges/" + bridge + "/ConnectionStatus";
+        const dbus_uint32_t serial = call_method(
+                    "com.victronenergy.platform",
+                    path,
+                    "com.victronenergy.platform",
+                    "SetValue", {msg_variant}, true);
+
+        auto handler = std::bind(answer_handler, this, path, std::placeholders::_1);
+        this->async_handlers[serial] = handler;
+    }
+}
+
+void State::write_all_bridge_connection_states_debounced()
+{
+    if (write_all_bridge_states_task_id != 0)
+    {
+        flashmq_remove_task(write_all_bridge_states_task_id);
+        write_all_bridge_states_task_id = 0;
+    }
+
+    if (bridge_connection_states_last_written == bridge_connection_states)
+        return;
+
+    auto f = [this] () {
+        write_all_bridge_states_task_id = 0;
+
+        /*
+         * Unfortunately we don't have a place to read the bridge connection intention from, so we have to deduce it.
+         */
+
+        {
+            BridgeConnectionState &b = this->bridge_connection_states[BRIDGE_DBUS];
+
+            std::optional<bool> connected = b.connected;
+            std::string msg = b.msg;
+
+            // TODO: when FlashMQ ultimately uses -1 as connection status for a bridge that disappeared, use that.
+            if (b.msg.find("disappeared from config") != std::string::npos || this->vrm_portal_mode < VrmPortalMode::ReadOnly)
+            {
+                connected.reset();
+                msg = BRIDGE_DEACTIVATED_STRING;
+            }
+
+            write_bridge_connection_state(BRIDGE_DBUS, connected, msg);
+        }
+
+        {
+            BridgeConnectionState &b = this->bridge_connection_states[BRIDGE_RPC];
+
+            std::optional<bool> connected = b.connected;
+            std::string msg = b.msg;
+
+            // TODO: when FlashMQ ultimately uses -1 as connection status for a bridge that disappeared, use that.
+            if (b.msg.find("disappeared from config") != std::string::npos || this->vrm_portal_mode < VrmPortalMode::Full)
+            {
+                connected.reset();
+                msg = BRIDGE_DEACTIVATED_STRING;
+            }
+
+            write_bridge_connection_state(BRIDGE_RPC, connected, msg);
+        }
+
+        bridge_connection_states_last_written = bridge_connection_states;
+
+    };
+
+    write_all_bridge_states_task_id = flashmq_add_task(f, 2000);
+}
+
 void State::scan_all_dbus_services()
 {
     auto list_names_handler = [](State *state, DBusMessage *msg) {
@@ -845,4 +952,9 @@ std::chrono::seconds QueuedChangedItem::age() const
     auto c = now - created_at;
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(c);
     return duration;
+}
+
+bool BridgeConnectionState::operator==(const BridgeConnectionState &other) const
+{
+    return msg == other.msg && connected == other.connected;
 }

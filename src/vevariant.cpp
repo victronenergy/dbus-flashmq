@@ -141,9 +141,25 @@ VeVariant::VeVariant(const std::string &v) :
 
 }
 
+VeVariant::VeVariant(const std::optional<std::string> &v) :
+    str(v.value_or(std::string())),
+    type(v.has_value() ? VeVariantType::String : VeVariantType::Array),
+    contained_array_type_as_string(v.has_value() ? std::string() : EMPTY_ARRAY_AS_NULL_VALUE_TYPE)
+{
+
+}
+
 VeVariant::VeVariant(const char *s) :
     str(s),
     type(VeVariantType::String)
+{
+
+}
+
+VeVariant::VeVariant(const std::optional<bool> b) :
+    bool_val(static_cast<dbus_bool_t>(b.value_or(0))),
+    type(b.has_value() ? VeVariantType::Boolean : VeVariantType::Array),
+    contained_array_type_as_string(b.has_value() ? std::string() : EMPTY_ARRAY_AS_NULL_VALUE_TYPE)
 {
 
 }

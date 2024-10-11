@@ -66,7 +66,18 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
 
 void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, std::string> &plugin_opts, bool reloading)
 {
+    if (!thread_data)
+        return;
 
+    State *state = static_cast<State*>(thread_data);
+
+    /*
+     *  These are async calls and because we don't have an event loop anymore at this point, it may be that the
+     *  call is never sent, when dbus buffers are full for instance. It's a rare occurance though, and not
+     *  easily fixed.
+     */
+    state->write_bridge_connection_state(BRIDGE_DBUS, std::optional<bool>(), BRIDGE_DEACTIVATED_STRING);
+    state->write_bridge_connection_state(BRIDGE_RPC, std::optional<bool>(), BRIDGE_DEACTIVATED_STRING);
 }
 
 AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
@@ -225,7 +236,10 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             else if (action == "$SYS" && subtopics.size() >= 5)
             {
                 /*
-                 * Deal with bridge notifications like $SYS/broker/bridge/GXdbus/connected
+                 * Deal with bridge notifications like:
+                 *
+                 * * $SYS/broker/bridge/GXdbus/connected
+                 * * $SYS/broker/bridge/GXdbus/connection_status
                  *
                  * Disconnection is a good time to re-register ourselves on VRM, because there is a small chance our
                  * registration has been reset by the user at some point in the past, which would only be seen when
@@ -233,31 +247,44 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                  */
 
                 const std::string &bridgeName = subtopics.at(3);
+                const std::string &which = subtopics.at(4);
                 const std::string payload_str(payload);
 
-                if ((bridgeName == "GXdbus" || bridgeName == "GXrpc"))
+                if (bridgeName == BRIDGE_DBUS || bridgeName == BRIDGE_RPC)
                 {
-                    bool &connected = state->bridges_connected[bridgeName];
-
-                    if (payload_str == "1")
+                    if (which == "connected")
                     {
-                        connected = true;
+                        bool &connected = state->bridges_connected[bridgeName];
+                        const bool connected_now = payload_str == "1";
+
+                        if (connected_now)
+                        {
+                            connected = true;
+                        }
+                        else if (connected && !connected_now && state->register_pending_id == 0)
+                        {
+                            connected = false;
+
+                            /*
+                             * Note that for the majority of users, this re-registration is not needed and it will just reconnect. We need to do it
+                             * just in case (for installations that may have had their tokens reset), and we can allow some random wait time
+                             * to prevent DDOS on the registration server.
+                             */
+                            const uint32_t delay = get_random<uint32_t>() % 600000;
+
+                            flashmq_logf(LOG_NOTICE, "Bridge '%s' disconnect detected. We will initiate a re-registration in %d ms.", bridgeName.c_str(), delay);
+
+                            state->initiate_broker_registration(delay);
+                        }
+
+                        state->bridge_connection_states[bridgeName].connected = connected_now;
                     }
-                    else if (connected && payload_str == "0" && state->register_pending_id == 0)
+                    else if (which == "connection_status")
                     {
-                        connected = false;
-
-                        /*
-                         * Note that for the majority of users, this re-registration is not needed and it will just reconnect. We need to do it
-                         * just in case (for installations that may have had their tokens reset), and we can allow some random wait time
-                         * to prevent DDOS on the registration server.
-                         */
-                        const uint32_t delay = get_random<uint32_t>() % 600000;
-
-                        flashmq_logf(LOG_NOTICE, "Bridge '%s' disconnect detected. We will initiate a re-registration in %d ms.", bridgeName.c_str(), delay);
-
-                        state->initiate_broker_registration(delay);
+                        state->bridge_connection_states[bridgeName].msg = payload_str;
                     }
+
+                    state->write_all_bridge_connection_states_debounced();
                 }
             }
         }

@@ -58,10 +58,20 @@ struct QueuedChangedItem
     std::chrono::seconds age() const;
 };
 
+struct BridgeConnectionState
+{
+    bool connected = false;
+    std::string msg;
+
+    bool operator==(const BridgeConnectionState &other) const;
+};
+
 struct State
 {
     uint32_t register_pending_id = 0;
     std::map<std::string, bool> bridges_connected;
+    std::unordered_map<std::string, BridgeConnectionState> bridge_connection_states;
+    std::unordered_map<std::string, BridgeConnectionState> bridge_connection_states_last_written;
     bool do_online_registration = true;
 
     static std::atomic_int instance_counter;
@@ -79,6 +89,7 @@ struct State
     uint32_t keep_alive_reset_task_id = 0;
     uint32_t heartbeat_task_id = 0;
     uint32_t period_task_id = 0;
+    uint32_t write_all_bridge_states_task_id = 0;
 
     int dispatch_event_fd = -1;
     DBusConnection *con = nullptr;
@@ -125,6 +136,8 @@ struct State
     void per_second_action();
     void start_one_second_timer();
     bool match_local_net(const struct sockaddr *addr) const;
+    void write_bridge_connection_state(const std::string &bridge, const std::optional<bool> connected, const std::string &msg);
+    void write_all_bridge_connection_states_debounced();
 };
 
 #endif // STATE_H

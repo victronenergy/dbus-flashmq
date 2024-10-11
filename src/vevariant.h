@@ -78,8 +78,10 @@ public:
     VeVariant(const VeVariant &other);
     VeVariant(DBusMessageIter *iter);
     VeVariant(const std::string &v);
+    explicit VeVariant(const std::optional<std::string> &v);
     VeVariant(const char *s);
     VeVariant(const nlohmann::json &j);
+    explicit VeVariant(const std::optional<bool> b);
     std::string as_text() const;
     nlohmann::json as_json_value(bool mask=false) const;
     int as_int() const;

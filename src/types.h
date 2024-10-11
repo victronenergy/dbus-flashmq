@@ -9,6 +9,10 @@
 #include "cachedstring.h"
 #include "boomstring.h"
 
+#define BRIDGE_DBUS "GXdbus"
+#define BRIDGE_RPC "GXrpc"
+#define BRIDGE_DEACTIVATED_STRING "deactivated"
+
 enum class VrmPortalMode
 {
     Unknown,
