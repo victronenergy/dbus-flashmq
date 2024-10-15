@@ -102,6 +102,7 @@ struct State
     std::vector<QueuedChangedItem> delayed_changed_values;
     std::chrono::time_point<std::chrono::steady_clock> vrmBridgeInterestTime;
     int keepAliveTokens = KEEPALIVE_TOKENS;
+    bool warningAboutNTopicsLogged = false;
 
     std::vector<Network> local_nets;
 

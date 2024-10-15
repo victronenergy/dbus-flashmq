@@ -194,6 +194,24 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                     return AuthResult::acl_denied;
             }
 
+            /*
+             * Only allow ourselves to write N messages. This avoids people's own integrations from publishing
+             * values they are not supposed to, which can be old, wrong, etc.
+             */
+            if (action == "N" && !(clientid.empty() && username.empty()) )
+            {
+                if (!state->warningAboutNTopicsLogged)
+                {
+                    state->warningAboutNTopicsLogged = true;
+                    flashmq_logf(LOG_WARNING,
+                        "Received external publish on N topic: '%s'. "
+                        "This is unexpected and probably a misconfigured integration. Blocking this and later ones.",
+                        topic.c_str());
+                }
+
+                return AuthResult::acl_denied;
+            }
+
             // Wo only work on strings like R/<portalid>/system/0/Serial.
             if (action == "W" || action == "R")
             {
