@@ -63,6 +63,7 @@ public:
     bool should_be_retained() const;
     bool is_pincode() const;
     bool is_vrm_portal_mode() const;
+    bool is_solar_history() const;
 };
 
 #endif // TYPES_H

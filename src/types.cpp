@@ -404,6 +404,11 @@ bool Item::is_vrm_portal_mode() const
     return short_service_name.service_type == "settings" && path.get() == "/Settings/Network/VrmPortal";
 }
 
+bool Item::is_solar_history() const
+{
+    return short_service_name.service_type == "solarcharger" && path.get().rfind("/History/", 0) == 0;
+}
+
 
 
 

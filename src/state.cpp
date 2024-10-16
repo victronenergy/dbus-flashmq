@@ -468,7 +468,10 @@ void State::publish_all(const std::optional<std::string> &payload_echo)
         for (auto &p2 : p.second)
         {
             Item &i = p2.second;
-            i.publish();
+
+            // You can still manually read them, like with a publish on 'R/<portalid>/solarcharger/279/History'.
+            if (!i.is_solar_history())
+                i.publish();
         }
     }
 
