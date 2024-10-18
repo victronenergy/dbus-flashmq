@@ -181,6 +181,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             return AuthResult::success;
 
         const std::string &action = subtopics.at(0);
+        const std::string &system_id = subtopics.at(1);
 
         if (access == AclAccess::write)
         {
@@ -198,7 +199,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
              * Only allow ourselves to write N messages. This avoids people's own integrations from publishing
              * values they are not supposed to, which can be old, wrong, etc.
              */
-            if (action == "N" && !(clientid.empty() && username.empty()) )
+            if (action == "N" && !(clientid.empty() && username.empty()) && state->unique_vrm_id == system_id)
             {
                 if (!state->warningAboutNTopicsLogged)
                 {
@@ -215,8 +216,6 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             // Wo only work on strings like R/<portalid>/system/0/Serial.
             if (action == "W" || action == "R")
             {
-                const std::string &system_id = subtopics.at(1);
-
                 if (system_id != state->unique_vrm_id)
                 {
                     flashmq_logf(LOG_ERR, "We received a request for '%s', but that's not us (%s)", system_id.c_str(), state->unique_vrm_id.c_str());
