@@ -66,6 +66,10 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
 
 void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, std::string> &plugin_opts, bool reloading)
 {
+    // As of yet, we don't do reload actions.
+    if (reloading)
+        return;
+
     if (!thread_data)
         return;
 
