@@ -29,7 +29,7 @@ Please don't use the issue tracker of this repo.
 
 Instead, search & post at the Modifications section of our community forum:
 
-https://community.victronenergy.com/spaces/31/mods.html
+https://community.victronenergy.com/c/modifications/5
 
 
 Notifications
