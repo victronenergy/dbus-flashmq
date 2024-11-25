@@ -292,7 +292,7 @@ def _get_vrm_broker_url(self):
 
 ### On-line server wildcard subscription limitation
 
-In the near future, the internet MQTT servers will no longer grant very wide subscriptions, such as `#`, `N/#` or `N/+/system/0/Ac/ConsumptionOnOutput/L1/Power`. Instead, subscriptions have to be placed per installation, like `N/<portal ID>/#`, or `N/<portal ID>/system/0/Ac/ConsumptionOnOutput/+/Power`.
+The internet MQTT servers no longer grant very wide subscriptions, such as `#`, `N/#` or `N/+/system/0/Ac/ConsumptionOnOutput/L1/Power`. Instead, subscriptions have to be placed per installation, like `N/<portal ID>/#`, or `N/<portal ID>/system/0/Ac/ConsumptionOnOutput/+/Power`.
 
 The reason is that wildcard subscriptions incur a very high load on the servers. If clients ask for every single message, every single message will have to be validated against the permissions of the client in question. This easily multiplies to an excessive degree.
 
