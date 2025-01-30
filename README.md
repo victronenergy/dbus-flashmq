@@ -41,7 +41,7 @@ When a value on the D-Bus changes, the plugin will initiate a publish. The MQTT 
 N/<portal ID>/<service_type>/<device instance>/<D-Bus path>
 ```
 
-* Portal ID is the VRM portal ID associated with the CCGX. You can find the portal ID on the CCGX in
+* Portal ID is the VRM portal ID associated with the GX Device. You can find the portal ID on the GX Device in
   Settings->VRM online portal->VRM Portal ID. On the VRM portal itself, you can find the ID in Settings
   tab.
 * Service type is the part of the D-Bus service name that describes the service.
@@ -68,7 +68,7 @@ There are 2 special cases:
   communication breakdown. If this happens a notification will be sent for all topics related to the device.
   The payload will be empty (zero bytes, so no valid JSON).
 
-If you want a roundup of all devices connected to the CCGX subscribe to this topic:
+If you want a roundup of all devices connected to the GX Device subscribe to this topic:
 
 ```sh
 mosquitto_sub -t 'N/<portal ID>/+/+/ProductId' -h '<ipaddress/hostname>' -v
@@ -99,7 +99,7 @@ mosquitto_pub -h '<ipaddress/hostname>' -t 'W/<portal ID>/vebus/257/Hub4/L1/AcPo
 ```
 
 The device instance (in this case 257) of a service usually depends on the communication port used the
-connect the device to the CCGX, so it is a good idea to check it before sending write requests. A nice way to
+connect the device to the GX Device, so it is a good idea to check it before sending write requests. A nice way to
 do this is by subscribing to the broker using wildcards.
 
 For example:
@@ -222,14 +222,10 @@ etc
 
 The previous implementation serialized all the answers as json.
 
-#### 4) Venus OS v3.20 till v3.30: a difference between Mosquitto and FlashMQ concerning login
-
-Venus OS v3.20, v3.21 and v3.22 caused a connection issue for some MQTT clients. This was solved in Venus OS v3.31. For details, see https://github.com/victronenergy/venus/issues/1257. 
-
 Connecting to the VRM MQTT servers
 -------------------------------------
 
-If the MQTT service is enabled, the CCGX will forward all notifications from the GX device to the Victron MQTT
+If the MQTT service is enabled, the GX Device will forward all notifications from the GX device to the Victron MQTT
 servers (see the broker URL section for the correct URL). All communication is encrypted using TLS.
 
 There are two ways to authenticate:
@@ -253,7 +249,7 @@ This command will get you the total system consumption:
 mosquitto_sub -v -I 'myclient_' -c -t 'N/<portal ID>/system/0/Ac/Consumption/Total/Power' -h '<broker_url>' -u '<email>' -P '<passwd>' --cafile 'venus-ca.crt' -p 8883
 ```
 
-You may need the full path to the cert file. On the CCGX it is in
+You may need the full path to the cert file. On the GX Device it is in
 `/etc/ssl/certs/ccgx-ca.pem`. You can also find the certificate in this repository as `venus-ca.crt`.
 
 In case you do not receive the value you expect, please read the keep-alive section.
