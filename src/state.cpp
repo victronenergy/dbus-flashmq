@@ -23,8 +23,6 @@
 #include "dbuspendingmessagecallguard.h"
 #include "exceptions.h"
 
-using namespace std;
-
 std::atomic_int State::instance_counter = 0;
 
 Watch::~Watch()
@@ -60,9 +58,9 @@ State::~State()
 
 void State::get_unique_id()
 {
-    fstream file;
+    std::fstream file;
 
-    file.open("/data/venus/unique-id", ios::in);
+    file.open("/data/venus/unique-id", std::ios::in);
     getline(file, this->unique_vrm_id);
     trim(this->unique_vrm_id);
 
