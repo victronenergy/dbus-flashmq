@@ -13,6 +13,8 @@
 
 // https://dbus.freedesktop.org/doc/api/html/index.html
 
+using namespace dbus_flashmq;
+
 int flashmq_plugin_version()
 {
     return FLASHMQ_PLUGIN_VERSION;

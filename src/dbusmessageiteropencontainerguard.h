@@ -3,6 +3,9 @@
 
 #include <dbus-1.0/dbus/dbus.h>
 
+namespace dbus_flashmq
+{
+
 class DBusMessageIterOpenContainerGuard
 {
     DBusMessageIter *iter = nullptr;
@@ -13,5 +16,7 @@ public:
     ~DBusMessageIterOpenContainerGuard();
     DBusMessageIter *get_array_iter();
 };
+
+}
 
 #endif // DBUSMESSAGEITEROPENCONTAINERGUARD_H

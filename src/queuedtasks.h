@@ -7,6 +7,9 @@
 #include <memory>
 #include <chrono>
 
+namespace dbus_flashmq
+{
+
 struct QueuedTask
 {
     std::chrono::time_point<std::chrono::steady_clock> when;
@@ -34,5 +37,7 @@ public:
     uint32_t getTimeTillNext() const;
     void performAll();
 };
+
+}
 
 #endif // QUEUEDTASKS_H

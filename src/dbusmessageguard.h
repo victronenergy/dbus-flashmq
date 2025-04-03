@@ -3,6 +3,9 @@
 
 #include <dbus-1.0/dbus/dbus.h>
 
+namespace dbus_flashmq
+{
+
 struct DBusMessageGuard
 {
     DBusMessage *d = nullptr;
@@ -12,5 +15,7 @@ struct DBusMessageGuard
     DBusMessageGuard(DBusMessageGuard &&other) = delete;
     ~DBusMessageGuard();
 };
+
+}
 
 #endif // DBUSMESSAGEGUARD_H

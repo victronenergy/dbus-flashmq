@@ -8,6 +8,8 @@
 #include "dbusmessageiteropencontainerguard.h"
 #include "dbusmessageitersignature.h"
 
+using namespace dbus_flashmq;
+
 VeVariantArray::VeVariantArray(const VeVariantArray &other)
 {
     *this = other;

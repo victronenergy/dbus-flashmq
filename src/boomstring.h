@@ -3,6 +3,9 @@
 
 #include <string>
 
+namespace dbus_flashmq
+{
+
 class BoomString
 {
     std::string s;
@@ -13,5 +16,7 @@ public:
     BoomString &operator=(const BoomString &other);
     const std::string &get() const;
 };
+
+}
 
 #endif // BOOMSTRING_H

@@ -3,9 +3,11 @@
 #include "exceptions.h"
 #include "dbusmessageitersignature.h"
 
+using namespace dbus_flashmq;
+
 // TODO: we need some kind of generalization / template for this, but I'm waiting with that until I know all the variants of result
 // sets that I'm getting.
-std::vector<std::string> get_array_from_reply(DBusMessage *msg)
+std::vector<std::string> dbus_flashmq::get_array_from_reply(DBusMessage *msg)
 {
     int msg_type = dbus_message_get_type(msg);
 
@@ -96,7 +98,7 @@ std::vector<std::string> get_array_from_reply(DBusMessage *msg)
  *    )
  * ]
  */
-std::unordered_map<std::string, Item> get_from_dict_with_dict_with_text_and_value(DBusMessage *msg)
+std::unordered_map<std::string, Item> dbus_flashmq::get_from_dict_with_dict_with_text_and_value(DBusMessage *msg)
 {
     int msg_type = dbus_message_get_type(msg);
 
@@ -177,7 +179,7 @@ std::unordered_map<std::string, Item> get_from_dict_with_dict_with_text_and_valu
  *   ]
  *
  */
-std::unordered_map<std::string, Item> get_from_get_value_on_root(DBusMessage *msg, const std::string &path_prefix)
+std::unordered_map<std::string, Item> dbus_flashmq::get_from_get_value_on_root(DBusMessage *msg, const std::string &path_prefix)
 {
     int msg_type = dbus_message_get_type(msg);
 
@@ -269,7 +271,7 @@ std::unordered_map<std::string, Item> get_from_get_value_on_root(DBusMessage *ms
  *    )
  * ]
  */
-std::unordered_map<std::string, Item> get_from_properties_changed(DBusMessage *msg)
+std::unordered_map<std::string, Item> dbus_flashmq::get_from_properties_changed(DBusMessage *msg)
 {
     std::unordered_map<std::string, Item> result;
 
@@ -280,7 +282,7 @@ std::unordered_map<std::string, Item> get_from_properties_changed(DBusMessage *m
 }
 
 // TODO: for the basic types, I think I can template this one.
-std::string get_string_from_reply(DBusMessage *msg)
+std::string dbus_flashmq::get_string_from_reply(DBusMessage *msg)
 {
     const int msg_type = dbus_message_get_type(msg);
 

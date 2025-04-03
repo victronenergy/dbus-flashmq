@@ -1,5 +1,7 @@
 #include "dbusmessageitersignature.h"
 
+using namespace dbus_flashmq;
+
 std::string DBusMessageIterSignature::getSignature(DBusMessageIter *iter) const
 {
     char *_sig = dbus_message_iter_get_signature(iter);

@@ -33,6 +33,7 @@ SOFTWARE.
 
 #include "utils.h"
 
+using namespace dbus_flashmq;
 
 Network::Network(const std::string &network)
 {

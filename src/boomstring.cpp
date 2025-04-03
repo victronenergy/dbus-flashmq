@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+using namespace dbus_flashmq;
+
 BoomString::BoomString(const std::string &val) :
     s(val)
 {

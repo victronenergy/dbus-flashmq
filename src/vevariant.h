@@ -13,6 +13,9 @@
 #define EMPTY_ARRAY_AS_NULL_VALUE_TYPE "i"
 #define VALID_EMPTY_ARRAY_VALUE_TYPE "u"
 
+namespace dbus_flashmq
+{
+
 enum class VeVariantType
 {
     Unknown,
@@ -101,14 +104,14 @@ public:
     VeVariant &get_dict_val(const VeVariant &key);
 };
 
-
+}
 
 namespace std {
 
     template <>
-    struct hash<VeVariant>
+    struct hash<dbus_flashmq::VeVariant>
     {
-        std::size_t operator()(const VeVariant& k) const
+        std::size_t operator()(const dbus_flashmq::VeVariant& k) const
         {
             return k.hash();
         }

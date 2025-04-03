@@ -1,5 +1,7 @@
 #include "dbusmessageguard.h"
 
+using namespace dbus_flashmq;
+
 DBusMessageGuard::DBusMessageGuard(DBusMessage *msg) :
     d(msg)
 {

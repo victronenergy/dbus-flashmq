@@ -1,5 +1,7 @@
 #include "cachedstring.h"
 
+using namespace dbus_flashmq;
+
 CachedString::CachedString(const CachedString &other)
 {
     *this = other;

@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include "serviceidentifier.h"
 
+namespace dbus_flashmq
+{
 
 class ShortServiceName : public std::string
 {
@@ -16,17 +18,20 @@ public:
     ShortServiceName();
 };
 
+}
+
 namespace std {
 
     template <>
-    struct hash<ShortServiceName>
+    struct hash<dbus_flashmq::ShortServiceName>
     {
-        std::size_t operator()(const ShortServiceName& k) const
+        std::size_t operator()(const dbus_flashmq::ShortServiceName& k) const
         {
             return std::hash<std::string>()(k);
         }
     };
 
 }
+
 
 #endif // SHORTSERVICENAME_H

@@ -13,7 +13,9 @@
 #include "exceptions.h"
 #include "fdguard.h"
 
-int dbus_watch_flags_to_epoll(int dbus_flags)
+using namespace dbus_flashmq;
+
+int dbus_flashmq::dbus_watch_flags_to_epoll(int dbus_flags)
 {
     int epoll_flags = 0;
 
@@ -29,7 +31,7 @@ int dbus_watch_flags_to_epoll(int dbus_flags)
     return epoll_flags;
 }
 
-int epoll_flags_to_dbus_watch_flags(int epoll_flags)
+int dbus_flashmq::epoll_flags_to_dbus_watch_flags(int epoll_flags)
 {
     int dbus_flags = 0;
 
@@ -45,7 +47,7 @@ int epoll_flags_to_dbus_watch_flags(int epoll_flags)
     return dbus_flags;
 }
 
-std::vector<std::string> splitToVector(const std::string &input, const char sep, size_t max, bool keep_empty_parts)
+std::vector<std::string> dbus_flashmq::splitToVector(const std::string &input, const char sep, size_t max, bool keep_empty_parts)
 {
     const auto substring_count = std::count(input.begin(), input.end(), sep) + 1;
     std::vector<std::string> result;
@@ -66,7 +68,7 @@ std::vector<std::string> splitToVector(const std::string &input, const char sep,
     return result;
 }
 
-std::string get_service_type(const std::string &service)
+std::string dbus_flashmq::get_service_type(const std::string &service)
 {
     if (service.find("com.victronenergy.") == std::string::npos)
         throw std::runtime_error("Not a victron service");
@@ -75,12 +77,12 @@ std::string get_service_type(const std::string &service)
     return parts.at(2);
 }
 
-std::string get_uid_from_topic(const std::vector<std::string> &subtopics)
+std::string dbus_flashmq::get_uid_from_topic(const std::vector<std::string> &subtopics)
 {
     return std::string();
 }
 
-ServiceIdentifier get_instance_from_items(const std::unordered_map<std::string, Item> &items)
+ServiceIdentifier dbus_flashmq::get_instance_from_items(const std::unordered_map<std::string, Item> &items)
 {
     uint32_t deviceInstance = 0;
 
@@ -107,33 +109,33 @@ ServiceIdentifier get_instance_from_items(const std::unordered_map<std::string, 
     return deviceInstance;
 }
 
-void ltrim(std::string &s)
+void dbus_flashmq::ltrim(std::string &s)
 {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
         return !std::isspace(ch);
     }));
 }
 
-void rtrim(std::string &s)
+void dbus_flashmq::rtrim(std::string &s)
 {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
         return !std::isspace(ch);
     }).base(), s.end());
 }
 
-void trim(std::string &s)
+void dbus_flashmq::trim(std::string &s)
 {
     ltrim(s);
     rtrim(s);
 }
 
-std::string get_stdout_from_process(const std::string &process)
+std::string dbus_flashmq::get_stdout_from_process(const std::string &process)
 {
     pid_t p;
     return get_stdout_from_process(process, p);
 }
 
-std::string get_stdout_from_process(const std::string &process, pid_t &out_pid)
+std::string dbus_flashmq::get_stdout_from_process(const std::string &process, pid_t &out_pid)
 {
     int pipe_fds[2];
 
@@ -214,7 +216,7 @@ std::string get_stdout_from_process(const std::string &process, pid_t &out_pid)
     return result;
 }
 
-int16_t s_to_int16(const std::string &s)
+int16_t dbus_flashmq::s_to_int16(const std::string &s)
 {
     int32_t x = std::stol(s);
 
@@ -225,7 +227,7 @@ int16_t s_to_int16(const std::string &s)
 }
 
 
-uint8_t s_to_uint8(const std::string &s)
+uint8_t dbus_flashmq::s_to_uint8(const std::string &s)
 {
     uint16_t x = std::stoi(s);
 
@@ -235,7 +237,7 @@ uint8_t s_to_uint8(const std::string &s)
     return x;
 }
 
-uint16_t s_to_uint16(const std::string &s)
+uint16_t dbus_flashmq::s_to_uint16(const std::string &s)
 {
     uint32_t x = std::stol(s);
 
@@ -246,7 +248,7 @@ uint16_t s_to_uint16(const std::string &s)
 }
 
 
-std::string dbus_message_get_error_name_safe(DBusMessage *msg)
+std::string dbus_flashmq::dbus_message_get_error_name_safe(DBusMessage *msg)
 {
     std::string result;
     const int msg_type = dbus_message_get_type(msg);
@@ -262,7 +264,7 @@ std::string dbus_message_get_error_name_safe(DBusMessage *msg)
     return result;
 }
 
-bool client_id_is_bridge(const std::string &clientid)
+bool dbus_flashmq::client_id_is_bridge(const std::string &clientid)
 {
     return clientid.find("GXdbus_") == 0 || clientid.find("GXrpc_") == 0;
 }
@@ -276,7 +278,7 @@ bool client_id_is_bridge(const std::string &clientid)
  * Password 'hallo' yields this:
  * $2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS
  */
-bool crypt_match(const std::string &phrase, const std::string &crypted)
+bool dbus_flashmq::crypt_match(const std::string &phrase, const std::string &crypted)
 {
     struct crypt_data data;
     memset(&data, 0, sizeof(struct crypt_data));
@@ -287,7 +289,7 @@ bool crypt_match(const std::string &phrase, const std::string &crypted)
 }
 
 
-VrmPortalMode parseVrmPortalMode(int val)
+VrmPortalMode dbus_flashmq::parseVrmPortalMode(int val)
 {
     switch(val)
     {

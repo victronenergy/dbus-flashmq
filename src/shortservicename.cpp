@@ -6,6 +6,8 @@
 #include "exceptions.h"
 #include "utils.h"
 
+using namespace dbus_flashmq;
+
 std::string ShortServiceName::get_value(const std::string &service, ServiceIdentifier instance)
 {
     std::string short_name = make_short(service);

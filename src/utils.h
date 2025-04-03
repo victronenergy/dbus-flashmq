@@ -10,6 +10,9 @@
 #include "types.h"
 #include "serviceidentifier.h"
 
+namespace dbus_flashmq
+{
+
 int dbus_watch_flags_to_epoll(int dbus_flags);
 int epoll_flags_to_dbus_watch_flags(int epoll_flags);
 std::vector<std::string> splitToVector(const std::string &input, const char sep, size_t max = std::numeric_limits<int>::max(), bool keep_empty_parts = true);
@@ -39,5 +42,7 @@ T get_random()
 bool client_id_is_bridge(const std::string &clientid);
 bool crypt_match(const std::string &phrase, const std::string &crypted);
 VrmPortalMode parseVrmPortalMode(int val);
+
+}
 
 #endif // UTILS_H

@@ -6,6 +6,8 @@
 #include "vendor/flashmq_plugin.h"
 #include "vendor/json.hpp"
 
+using namespace dbus_flashmq;
+
 
 ValueMinMax &ValueMinMax::operator=(const ValueMinMax &other)
 {

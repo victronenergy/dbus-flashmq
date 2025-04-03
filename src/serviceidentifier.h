@@ -3,6 +3,9 @@
 
 #include <string>
 
+namespace dbus_flashmq
+{
+
 /**
  * @brief The ServiceIdentifier class was created to support the new 'identifier' for places where DeviceInstance doesn't make sense to
  * represent multiple occurances.
@@ -17,5 +20,7 @@ public:
     const std::string &getValue() const;
     ServiceIdentifier &operator=(const ServiceIdentifier &rhs);
 };
+
+}
 
 #endif // SERVICEIDENTIFIER_H

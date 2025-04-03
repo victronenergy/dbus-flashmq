@@ -33,6 +33,9 @@ SOFTWARE.
 #include <string>
 #include <memory>
 
+namespace dbus_flashmq
+{
+
 /**
  * @brief The Network class is taken from FlashMQ main.
  */
@@ -51,5 +54,7 @@ public:
     bool match(const struct sockaddr_in *addr) const ;
     bool match(const struct sockaddr_in6 *addr) const;
 };
+
+}
 
 #endif // NETWORK_H

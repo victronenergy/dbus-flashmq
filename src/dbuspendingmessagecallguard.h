@@ -3,6 +3,9 @@
 
 #include <dbus-1.0/dbus/dbus.h>
 
+namespace dbus_flashmq
+{
+
 /**
  * @brief The DBusPendingMessageCallGuard class releases the reference you get after dbus_connection_send_with_reply(), for instance.
  *
@@ -18,7 +21,7 @@ struct DBusPendingMessageCallGuard
     ~DBusPendingMessageCallGuard();
 };
 
-
+}
 
 
 #endif // DBUSPENDINGMESSAGECALLGUARD_H

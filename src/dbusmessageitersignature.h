@@ -4,6 +4,9 @@
 #include <dbus-1.0/dbus/dbus.h>
 #include <string>
 
+namespace dbus_flashmq
+{
+
 class DBusMessageIterSignature
 {
     std::string getSignature(DBusMessageIter *iter) const;
@@ -12,5 +15,7 @@ public:
 
     const std::string signature;
 };
+
+}
 
 #endif // DBUSMESSAGEITERSIGNATURE_H

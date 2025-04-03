@@ -1,6 +1,8 @@
 #include "serviceidentifier.h"
 #include <cassert>
 
+using namespace dbus_flashmq;
+
 ServiceIdentifier::ServiceIdentifier(int instance) :
     val(std::to_string(instance))
 {

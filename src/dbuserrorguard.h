@@ -3,6 +3,9 @@
 
 #include <dbus-1.0/dbus/dbus.h>
 
+namespace dbus_flashmq
+{
+
 /**
  * @brief The DBusErrorGuard class makes dealing with DBusErrors easier and prevent leaks.
  *
@@ -17,5 +20,7 @@ public:
     DBusError *get();
     void throw_error();
 };
+
+}
 
 #endif // DBUSERRORGUARD_H

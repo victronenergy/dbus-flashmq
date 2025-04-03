@@ -7,6 +7,9 @@
 #include <unordered_map>
 #include <any>
 
+namespace dbus_flashmq
+{
+
 void dbus_dispatch_status_function(DBusConnection *connection, DBusDispatchStatus new_status, void *data);
 
 dbus_bool_t dbus_add_watch_function(DBusWatch *watch, void *data);
@@ -21,6 +24,6 @@ void dbus_timeout_do_handle(DBusTimeout *timeout);
 
 void dbus_pending_call_notify(DBusPendingCall *pending, void *data) noexcept;
 
-
+}
 
 #endif // DBUS_FUNCTIONS_H

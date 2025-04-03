@@ -18,6 +18,9 @@
 #define KEEPALIVE_TOKENS 3
 #define ONE_SECOND_TIMER_INTERVAL 1000
 
+namespace dbus_flashmq
+{
+
 /**
  * @brief The Watch class is not an owner of the watches. DBus itself is.
  *
@@ -140,5 +143,7 @@ struct State
     void write_bridge_connection_state(const std::string &bridge, const std::optional<bool> connected, const std::string &msg);
     void write_all_bridge_connection_states_debounced();
 };
+
+}
 
 #endif // STATE_H

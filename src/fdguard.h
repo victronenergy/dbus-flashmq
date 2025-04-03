@@ -1,6 +1,8 @@
 #ifndef FDGUARD_H
 #define FDGUARD_H
 
+namespace dbus_flashmq
+{
 
 class FdGuard
 {
@@ -10,5 +12,7 @@ public:
     ~FdGuard();
     int get() const;
 };
+
+}
 
 #endif // FDGUARD_H

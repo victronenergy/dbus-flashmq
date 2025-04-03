@@ -8,7 +8,9 @@
 #include "dbuserrorguard.h"
 #include "dbusmessageitersignature.h"
 
-void dbus_dispatch_status_function(DBusConnection *connection, DBusDispatchStatus new_status, void *data)
+using namespace dbus_flashmq;
+
+void dbus_flashmq::dbus_dispatch_status_function(DBusConnection *connection, DBusDispatchStatus new_status, void *data)
 {
     State *state = static_cast<State*>(data);
 
@@ -18,7 +20,7 @@ void dbus_dispatch_status_function(DBusConnection *connection, DBusDispatchStatu
     }
 }
 
-dbus_bool_t dbus_add_watch_function(DBusWatch *watch, void *data)
+dbus_bool_t dbus_flashmq::dbus_add_watch_function(DBusWatch *watch, void *data)
 {
     State *state = static_cast<State*>(data);
 
@@ -45,7 +47,7 @@ dbus_bool_t dbus_add_watch_function(DBusWatch *watch, void *data)
     return true;
 }
 
-void dbus_remove_watch_function(DBusWatch *watch, void *data)
+void dbus_flashmq::dbus_remove_watch_function(DBusWatch *watch, void *data)
 {
     State *state = static_cast<State*>(data);
     const int fd = dbus_watch_get_unix_fd(watch);
@@ -72,14 +74,14 @@ void dbus_remove_watch_function(DBusWatch *watch, void *data)
     }
 }
 
-void dbus_toggle_watch_function(DBusWatch *watch, void *data)
+void dbus_flashmq::dbus_toggle_watch_function(DBusWatch *watch, void *data)
 {
     // I'm not fully sure what this callback wants me to do, but I'm guessing changing the EPOLL events I'm watching for,
     // which in FlashMQ is the same function.
     dbus_add_watch_function(watch, data);
 }
 
-void dbus_timeout_do_handle(DBusTimeout *timeout)
+void dbus_flashmq::dbus_timeout_do_handle(DBusTimeout *timeout)
 {
     dbus_bool_t result = dbus_timeout_handle(timeout);
 
@@ -93,7 +95,7 @@ void dbus_timeout_do_handle(DBusTimeout *timeout)
     }
 }
 
-dbus_bool_t dbus_add_timeout_function(DBusTimeout *timeout, void *data)
+dbus_bool_t dbus_flashmq::dbus_add_timeout_function(DBusTimeout *timeout, void *data)
 {
     auto f = std::bind(&dbus_timeout_do_handle, timeout);
     int interval = dbus_timeout_get_interval(timeout);
@@ -114,7 +116,7 @@ dbus_bool_t dbus_add_timeout_function(DBusTimeout *timeout, void *data)
     return true;
 }
 
-void dbus_remove_timeout_function(DBusTimeout *timeout, void *data)
+void dbus_flashmq::dbus_remove_timeout_function(DBusTimeout *timeout, void *data)
 {
     try
     {
@@ -128,7 +130,7 @@ void dbus_remove_timeout_function(DBusTimeout *timeout, void *data)
     }
 }
 
-void dbus_toggle_timeout_function(DBusTimeout *timeout, void *data)
+void dbus_flashmq::dbus_toggle_timeout_function(DBusTimeout *timeout, void *data)
 {
     // Say whaaaat?!
     //flashmq_logf(LOG_ERR, "What do I do here?");
@@ -144,7 +146,7 @@ void dbus_toggle_timeout_function(DBusTimeout *timeout, void *data)
  *
  * Called from dbus internals, so we can't throw exceptions.
  */
-void dbus_pending_call_notify(DBusPendingCall *pending, void *data) noexcept
+void dbus_flashmq::dbus_pending_call_notify(DBusPendingCall *pending, void *data) noexcept
 {
     State *state = static_cast<State*>(data);
 
@@ -188,7 +190,7 @@ void dbus_pending_call_notify(DBusPendingCall *pending, void *data) noexcept
     }
 }
 
-DBusHandlerResult dbus_handle_message(DBusConnection *connection, DBusMessage *message, void *user_data)
+DBusHandlerResult dbus_flashmq::dbus_handle_message(DBusConnection *connection, DBusMessage *message, void *user_data)
 {
     const char *_signal_name = dbus_message_get_member(message);
     const std::string signal_name(_signal_name ? _signal_name : "");

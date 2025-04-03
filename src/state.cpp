@@ -18,10 +18,11 @@
 #include "types.h"
 #include "dbuserrorguard.h"
 #include "exceptions.h"
-#include "dbusmessageitersignature.h"
 #include "dbusmessageiteropencontainerguard.h"
 #include "dbuspendingmessagecallguard.h"
 #include "exceptions.h"
+
+using namespace dbus_flashmq;
 
 std::atomic_int State::instance_counter = 0;
 

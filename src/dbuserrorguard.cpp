@@ -2,6 +2,8 @@
 #include <string>
 #include <stdexcept>
 
+using namespace dbus_flashmq;
+
 DBusErrorGuard::DBusErrorGuard()
 {
     dbus_error_init(&err);

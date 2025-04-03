@@ -8,6 +8,8 @@
 
 #define MAX_EVENTS 25
 
+using namespace dbus_flashmq;
+
 int main(int argc, char **argv)
 {
     if (!crypt_match("hallo", "$2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS"))

@@ -12,6 +12,8 @@
 
 #include "testerglobals.h"
 
+using namespace dbus_flashmq;
+
 std::string getLogLevelString(int level)
 {
     switch (level)

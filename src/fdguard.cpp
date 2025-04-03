@@ -2,6 +2,8 @@
 
 #include <unistd.h>
 
+using namespace dbus_flashmq;
+
 FdGuard::FdGuard(int fd) :
     fd(fd)
 {

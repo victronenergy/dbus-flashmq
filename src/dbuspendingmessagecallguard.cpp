@@ -1,5 +1,7 @@
 #include "dbuspendingmessagecallguard.h"
 
+using namespace dbus_flashmq;
+
 DBusPendingMessageCallGuard::DBusPendingMessageCallGuard()
 {
 

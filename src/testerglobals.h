@@ -5,6 +5,9 @@
 #include <memory>
 #include "queuedtasks.h"
 
+namespace dbus_flashmq
+{
+
 class TesterGlobals
 {
     TesterGlobals();
@@ -19,5 +22,7 @@ public:
     void pollExternalFd(int fd, uint32_t events, const std::weak_ptr<void> &p);
     void pollExternalRemove(int fd);
 };
+
+}
 
 #endif // TESTERGLOBALS_H

@@ -3,6 +3,9 @@
 
 #include <stdexcept>
 
+namespace dbus_flashmq
+{
+
 class ValueError : public std::runtime_error
 {
 public:
@@ -18,5 +21,6 @@ public:
     ItemNotFound(const std::string &msg, const std::string &service, const std::string &dbus_like_path);
 };
 
+}
 
 #endif // EXCEPTIONS_H

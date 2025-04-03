@@ -3,6 +3,8 @@
 #include <cstring>
 #include "vendor/flashmq_plugin.h"
 
+using namespace dbus_flashmq;
+
 TesterGlobals::TesterGlobals()
 {
 

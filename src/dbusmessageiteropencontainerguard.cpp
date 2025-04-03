@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+using namespace dbus_flashmq;
+
 DBusMessageIterOpenContainerGuard::DBusMessageIterOpenContainerGuard(DBusMessageIter *iter, int container_type, const char *contained_signature) :
     iter(iter)
 {
