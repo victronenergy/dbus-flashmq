@@ -186,6 +186,19 @@ std::optional<AuthResult> do_token_auth(const std::string &username, const std::
     return {};
 }
 
+AuthResult auth_success_or_delayed_fail(const std::weak_ptr<Client> &client, AuthResult result)
+{
+    if (result == AuthResult::success)
+        return AuthResult::success;
+
+    auto f = [client, result]() {
+        flashmq_continue_async_authentication(client, result, "", "");
+    };
+    const uint32_t delay = get_random<uint32_t>() % 5000 + 1000;
+    flashmq_add_task(f, delay);
+    return AuthResult::async;
+}
+
 AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
                                       const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
 {
@@ -203,7 +216,7 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
     const std::optional<AuthResult> token_auth_result = do_token_auth(username, password);
     if (token_auth_result)
     {
-        return token_auth_result.value();
+        return auth_success_or_delayed_fail(client, token_auth_result.value());
     }
 
     /*
@@ -214,7 +227,7 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
      */
     if (username.rfind("evcs__", 0) == 0)
     {
-        return AuthResult::login_denied;
+        return auth_success_or_delayed_fail(client, AuthResult::login_denied);
     }
 
     if (do_vnc_auth(password) == AuthResult::success)
@@ -222,7 +235,7 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
         return AuthResult::success;
     }
 
-    return AuthResult::login_denied;
+    return auth_success_or_delayed_fail(client, AuthResult::login_denied);
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
