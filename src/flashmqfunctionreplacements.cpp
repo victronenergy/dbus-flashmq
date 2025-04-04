@@ -141,3 +141,13 @@ constexpr int FlashMQSockAddr::getLen()
 {
     return sizeof(struct sockaddr_in6);
 }
+
+void flashmq_get_session_pointer(const std::string &clientid, const std::string &username, std::weak_ptr<Session> &sessionOut)
+{
+
+}
+
+void flashmq_get_client_pointer(const std::weak_ptr<Session> &session, std::weak_ptr<Client> &clientOut)
+{
+
+}

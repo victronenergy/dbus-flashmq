@@ -7,6 +7,7 @@
 #include <string.h>
 #include <thread>
 #include <fstream>
+#include <optional>
 
 #include "state.h"
 #include "utils.h"
@@ -86,20 +87,8 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
     state->write_bridge_connection_state(BRIDGE_RPC, std::optional<bool>(), BRIDGE_DEACTIVATED_STRING);
 }
 
-AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
-                                      const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
+AuthResult do_vnc_auth(const std::string &password)
 {
-    State *state = static_cast<State*>(thread_data);
-
-    FlashMQSockAddr addr;
-    memset(&addr, 0, sizeof(FlashMQSockAddr));
-    flashmq_get_client_address(client, nullptr, &addr);
-
-    if (state->match_local_net(addr.getAddr()))
-    {
-        return AuthResult::success;
-    }
-
     const static std::string vnc_password_file_path = "/data/conf/vncpassword.txt";
 
     try
@@ -137,7 +126,100 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
     }
     catch (std::exception &ex)
     {
-        flashmq_logf(LOG_ERR, "Error in trying to read '%s': %s", vnc_password_file_path.c_str(), ex.what());
+        flashmq_logf(LOG_ERR, "Error in do_vnc_auth using '%s': %s", vnc_password_file_path.c_str(), ex.what());
+    }
+
+    return AuthResult::login_denied;
+}
+
+/**
+ * These are tokens set using the venus security API by the EVCS during the pairing process. This
+ * will probably be:
+ *
+ * {"AddUser": {"User": "evcs__HQ2401ABCDE", "Password": "machinegenerated"}}
+ *
+ * This is (probably) a temporary solution. We will probably interface with a Venus auth service
+ * at some point.
+ */
+std::optional<AuthResult> do_token_auth(const std::string &username, const std::string &password)
+{
+    // Example for password 'asdf': $2y$10$Gcbfb4OwelTnQy3yr2dbIOpyP4nJP0fjg2UeoMF4.JnyruWY4.j0S
+
+    try
+    {
+        const static std::string token_users_file = "/data/conf/users.txt";
+
+        if (!std::filesystem::exists(token_users_file))
+            return {};
+
+        std::ifstream infile(token_users_file);
+
+        if (!infile.is_open())
+        {
+            throw std::runtime_error("Error opening " + token_users_file);
+        }
+
+        for(std::string line; getline(infile, line ); )
+        {
+            const std::vector<std::string> password_line_fields = splitToVector(line, ':');
+
+            if (password_line_fields.size() != 2)
+            {
+                flashmq_logf(LOG_ERR, "(Lines in) file '%s' is not in the format 'username:hash'", token_users_file.c_str());
+                return {};
+            }
+
+            if (username == password_line_fields.at(0))
+            {
+                if (crypt_match(password, password_line_fields.at(1)))
+                    return AuthResult::success;
+                else
+                    return AuthResult::login_denied;
+            }
+        }
+    }
+    catch (std::exception &ex)
+    {
+        flashmq_logf(LOG_ERR, "Error in do_token_auth: %s", ex.what());
+    }
+
+    return {};
+}
+
+AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
+                                      const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
+{
+    State *state = static_cast<State*>(thread_data);
+
+    FlashMQSockAddr addr;
+    memset(&addr, 0, sizeof(FlashMQSockAddr));
+    flashmq_get_client_address(client, nullptr, &addr);
+
+    if (state->match_local_net(addr.getAddr()))
+    {
+        return AuthResult::success;
+    }
+
+    const std::optional<AuthResult> token_auth_result = do_token_auth(username, password);
+    if (token_auth_result)
+    {
+        return token_auth_result.value();
+    }
+
+    /*
+     * Avoid granting access to EVCS things with the security profile password. This also means that 'weak' mode
+     * does not allow EVCS logins with random passwords.
+     *
+     * This is on top of an explicit deny if an evcs__ user exists in the user password file.
+     */
+    if (username.rfind("evcs__", 0) == 0)
+    {
+        return AuthResult::login_denied;
+    }
+
+    if (do_vnc_auth(password) == AuthResult::success)
+    {
+        return AuthResult::success;
     }
 
     return AuthResult::login_denied;
@@ -191,6 +273,48 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
 
         const std::string &action = subtopics.at(0);
         const std::string &system_id = subtopics.at(1);
+
+        /*
+         * Examples:
+         * - I/evcharger/HQ2401ABCDE/vregset/gx2evcs
+         * - I/evcharger/HQ2401ABCDE/vregset/evcs2gx
+         * - I/evcharger/HQ2401ABCDE/vregnotify
+         *
+         * Username example from the connecting EVCS: evcs__HQ2401ABCDE
+         */
+        if (action == "I")
+        {
+            if (subtopics.size() < 3)
+                return AuthResult::acl_denied;
+
+            if (username == "evcs")
+            {
+                std::weak_ptr<Session> session;
+                flashmq_get_session_pointer(clientid, username, session);
+                std::weak_ptr<Client> client;
+                flashmq_get_client_pointer(session, client);
+
+                FlashMQSockAddr addr;
+                memset(&addr, 0, sizeof(FlashMQSockAddr));
+                flashmq_get_client_address(client, nullptr, &addr);
+
+                // The local service can do anything.
+                if (state->match_local_net(addr.getAddr()))
+                {
+                    return AuthResult::success;
+                }
+            }
+
+            const std::string_view serial = get_substring_after("evcs__", username);
+
+            if (serial.empty())
+                return AuthResult::acl_denied;
+
+            if (serial != subtopics.at(2))
+                return AuthResult::acl_denied;
+
+            return AuthResult::success;
+        }
 
         if (access == AclAccess::write)
         {
