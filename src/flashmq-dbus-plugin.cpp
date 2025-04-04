@@ -144,7 +144,8 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
-                                  std::string_view payload, uint8_t &qos, bool &retain, std::vector<std::pair<std::string, std::string>> *userProperties)
+                                  std::string_view payload, uint8_t &qos, bool &retain, const std::optional<std::string> &correlationData,
+                                  const std::optional<std::string> &responseTopic, std::vector<std::pair<std::string, std::string>> *userProperties)
 {
     State *state = static_cast<State*>(thread_data);
 
@@ -176,8 +177,10 @@ bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid
  * @brief using ACL hook as 'on_message' handler.
  */
 AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, const std::string &clientid, const std::string &username,
-                                    const std::string &topic, const std::vector<std::string> &subtopics, std::string_view payload,
-                                    const uint8_t qos, const bool retain, const std::vector<std::pair<std::string, std::string>> *userProperties)
+                                    const std::string &topic, const std::vector<std::string> &subtopics, const std::string &shareName,
+                                    std::string_view payload, const uint8_t qos, const bool retain,
+                                    const std::optional<std::string> &correlationData, const std::optional<std::string> &responseTopic,
+                                    const std::vector<std::pair<std::string, std::string>> *userProperties)
 {
     try
     {
