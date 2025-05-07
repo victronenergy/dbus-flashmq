@@ -173,6 +173,97 @@ bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid
     return false;
 }
 
+void handle_venus_actions(
+    State *state, const std::string &action, const std::string &system_id, const std::string clientid,
+    const std::string &topic, const std::vector<std::string> &subtopics, std::string_view payload)
+{
+    // Wo only work on strings like R/<portalid>/system/0/Serial.
+    if (action == "W" || action == "R")
+    {
+        /*
+         * Because we also need to respond to reads and writes from remote clients when the system is not alive, we need
+         * to consider any AclAccess::write activity as interest.
+         */
+        if (client_id_is_bridge(clientid))
+            state->vrmBridgeInterestTime = std::chrono::steady_clock::now();
+
+        // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
+        if (action == "W")
+        {
+            std::string payload_str(payload);
+            state->write_to_dbus(topic, payload_str);
+        }
+        else if (action == "R")
+        {
+            std::string payload_str(payload);
+            const std::string path = splitToVector(topic, '/', 2).at(2);
+            if (path == "system/0/Serial" || path == "keepalive")
+            {
+                state->handle_keepalive(payload_str);
+            }
+
+            if (path != "keepalive")
+            {
+                state->handle_read(topic);
+            }
+        }
+    }
+    else if (action == "$SYS" && subtopics.size() >= 5)
+    {
+        /*
+         * Deal with bridge notifications like:
+         *
+         * * $SYS/broker/bridge/GXdbus/connected
+         * * $SYS/broker/bridge/GXdbus/connection_status
+         *
+         * Disconnection is a good time to re-register ourselves on VRM, because there is a small chance our
+         * registration has been reset by the user at some point in the past, which would only be seen when
+         * making a new connection.
+         */
+
+        const std::string &bridgeName = subtopics.at(3);
+        const std::string &which = subtopics.at(4);
+        const std::string payload_str(payload);
+
+        if (bridgeName == BRIDGE_DBUS || bridgeName == BRIDGE_RPC)
+        {
+            if (which == "connected")
+            {
+                bool &connected = state->bridges_connected[bridgeName];
+                const bool connected_now = payload_str == "1";
+
+                if (connected_now)
+                {
+                    connected = true;
+                }
+                else if (connected && !connected_now && state->register_pending_id == 0)
+                {
+                    connected = false;
+
+                    /*
+                     * Note that for the majority of users, this re-registration is not needed and it will just reconnect. We need to do it
+                     * just in case (for installations that may have had their tokens reset), and we can allow some random wait time
+                     * to prevent DDOS on the registration server.
+                     */
+                    const uint32_t delay = get_random<uint32_t>() % 600000;
+
+                    flashmq_logf(LOG_NOTICE, "Bridge '%s' disconnect detected. We will initiate a re-registration in %d ms.", bridgeName.c_str(), delay);
+
+                    state->initiate_broker_registration(delay);
+                }
+
+                state->bridge_connection_states[bridgeName].connected = connected_now;
+            }
+            else if (which == "connection_status")
+            {
+                state->bridge_connection_states[bridgeName].msg = payload_str;
+            }
+
+            state->write_all_bridge_connection_states_debounced();
+        }
+    }
+}
+
 /**
  * @brief using ACL hook as 'on_message' handler.
  */
@@ -182,6 +273,9 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                                     const std::optional<std::string> &correlationData, const std::optional<std::string> &responseTopic,
                                     const std::vector<std::pair<std::string, std::string>> *userProperties)
 {
+    if (access == AclAccess::subscribe || access == AclAccess::register_will)
+        return AuthResult::success;
+
     try
     {
         State *state = static_cast<State*>(thread_data);
@@ -194,9 +288,25 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
 
         if (access == AclAccess::write)
         {
+            if ((action == "W" || action == "R" || action == "P") && system_id != state->unique_vrm_id)
+            {
+                flashmq_logf(LOG_ERR, "We received a '%s' request for '%s', but that's not us (but %s)",
+                             action.c_str(), system_id.c_str(), state->unique_vrm_id.c_str());
+
+                /*
+                 * With W and R we are normally the one acting on that, so we can still relay them to any
+                 * subscribers. But for P, we are ensuring nobody gets those to avoid other Venus services
+                 * mistakingly acting on them.
+                 */
+                if (action == "W" || action == "R")
+                    return AuthResult::success;
+                else
+                    return AuthResult::acl_denied;
+            }
+
             /*
-             * We also block P/<portalid>/in for safety, but that should already be covered by not having
-             * a bridge connection for RPC.
+             * We also block P/<portalid>/in for safety; that is currently also covered by not having an RPC bridge
+             * connection in read-only mode, but that may not be a separate connection in the future anymore.
              */
             if (action == "W" || (action == "P" && subtopics.size() >= 3 && subtopics.at(2) == "in"))
             {
@@ -222,101 +332,15 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                 return AuthResult::acl_denied;
             }
 
-            // Wo only work on strings like R/<portalid>/system/0/Serial.
-            if (action == "W" || action == "R")
-            {
-                if (system_id != state->unique_vrm_id)
-                {
-                    flashmq_logf(LOG_ERR, "We received a request for '%s', but that's not us (%s)", system_id.c_str(), state->unique_vrm_id.c_str());
-                    return AuthResult::success;
-                }
-
-                /*
-                 * Because we also need to respond to reads and writes from remote clients when the system is not alive, we need
-                 * to consider any AclAccess::write activity as interest.
-                 */
-                if (client_id_is_bridge(clientid))
-                    state->vrmBridgeInterestTime = std::chrono::steady_clock::now();
-
-                // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
-                if (action == "W")
-                {
-                    std::string payload_str(payload);
-                    state->write_to_dbus(topic, payload_str);
-                }
-                else if (action == "R")
-                {
-                    std::string payload_str(payload);
-                    const std::string path = splitToVector(topic, '/', 2).at(2);
-                    if (path == "system/0/Serial" || path == "keepalive")
-                    {
-                        state->handle_keepalive(payload_str);
-                    }
-
-                    if (path != "keepalive")
-                    {
-                        state->handle_read(topic);
-                    }
-                }
-            }
-            else if (action == "$SYS" && subtopics.size() >= 5)
-            {
-                /*
-                 * Deal with bridge notifications like:
-                 *
-                 * * $SYS/broker/bridge/GXdbus/connected
-                 * * $SYS/broker/bridge/GXdbus/connection_status
-                 *
-                 * Disconnection is a good time to re-register ourselves on VRM, because there is a small chance our
-                 * registration has been reset by the user at some point in the past, which would only be seen when
-                 * making a new connection.
-                 */
-
-                const std::string &bridgeName = subtopics.at(3);
-                const std::string &which = subtopics.at(4);
-                const std::string payload_str(payload);
-
-                if (bridgeName == BRIDGE_DBUS || bridgeName == BRIDGE_RPC)
-                {
-                    if (which == "connected")
-                    {
-                        bool &connected = state->bridges_connected[bridgeName];
-                        const bool connected_now = payload_str == "1";
-
-                        if (connected_now)
-                        {
-                            connected = true;
-                        }
-                        else if (connected && !connected_now && state->register_pending_id == 0)
-                        {
-                            connected = false;
-
-                            /*
-                             * Note that for the majority of users, this re-registration is not needed and it will just reconnect. We need to do it
-                             * just in case (for installations that may have had their tokens reset), and we can allow some random wait time
-                             * to prevent DDOS on the registration server.
-                             */
-                            const uint32_t delay = get_random<uint32_t>() % 600000;
-
-                            flashmq_logf(LOG_NOTICE, "Bridge '%s' disconnect detected. We will initiate a re-registration in %d ms.", bridgeName.c_str(), delay);
-
-                            state->initiate_broker_registration(delay);
-                        }
-
-                        state->bridge_connection_states[bridgeName].connected = connected_now;
-                    }
-                    else if (which == "connection_status")
-                    {
-                        state->bridge_connection_states[bridgeName].msg = payload_str;
-                    }
-
-                    state->write_all_bridge_connection_states_debounced();
-                }
-            }
+            // The rest is not auth as such, but take actions based on the messages.
+            handle_venus_actions(state, action, system_id, clientid, topic, subtopics, payload);
         }
         else if (access == AclAccess::read)
         {
-            // We only limit our own N (notifications), to avoid accidentally denying other things.
+            /*
+             * The if-statements below stop traffic over the bridge if there is no VRM interest. However, we only
+             * limit our own N (notifications), to avoid accidentally denying other things.
+             */
             if (action != "N")
                 return AuthResult::success;
 
