@@ -141,3 +141,8 @@ constexpr int FlashMQSockAddr::getLen()
 {
     return sizeof(struct sockaddr_in6);
 }
+
+void flashmq_continue_async_authentication(const std::weak_ptr<Client> &client, AuthResult result, const std::string &authMethod, const std::string &returnData)
+{
+
+}

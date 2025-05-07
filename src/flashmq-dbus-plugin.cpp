@@ -86,6 +86,20 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
     state->write_bridge_connection_state(BRIDGE_RPC, std::optional<bool>(), BRIDGE_DEACTIVATED_STRING);
 }
 
+AuthResult auth_success_or_delayed_fail(const std::weak_ptr<Client> &client, const std::string &username, AuthResult result)
+{
+    if (result == AuthResult::success)
+        return AuthResult::success;
+
+    auto f = [client, result]() {
+        flashmq_continue_async_authentication(client, result, "", "");
+    };
+    const uint32_t delay = get_random<uint32_t>() % 5000 + 1000;
+    flashmq_add_task(f, delay);
+    flashmq_logf(LOG_NOTICE, "Sending delayed deny for login with '%s'", username.c_str());
+    return AuthResult::async;
+}
+
 AuthResult do_vnc_auth(const std::string &password)
 {
     const static std::string vnc_password_file_path = "/data/conf/vncpassword.txt";
@@ -151,7 +165,7 @@ AuthResult flashmq_plugin_login_check(
         return AuthResult::success;
     }
 
-    return AuthResult::login_denied;
+    return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
