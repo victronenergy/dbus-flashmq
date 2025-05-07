@@ -86,20 +86,8 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
     state->write_bridge_connection_state(BRIDGE_RPC, std::optional<bool>(), BRIDGE_DEACTIVATED_STRING);
 }
 
-AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
-                                      const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
+AuthResult do_vnc_auth(const std::string &password)
 {
-    State *state = static_cast<State*>(thread_data);
-
-    FlashMQSockAddr addr;
-    memset(&addr, 0, sizeof(FlashMQSockAddr));
-    flashmq_get_client_address(client, nullptr, &addr);
-
-    if (state->match_local_net(addr.getAddr()))
-    {
-        return AuthResult::success;
-    }
-
     const static std::string vnc_password_file_path = "/data/conf/vncpassword.txt";
 
     try
@@ -137,7 +125,30 @@ AuthResult flashmq_plugin_login_check(void *thread_data, const std::string &clie
     }
     catch (std::exception &ex)
     {
-        flashmq_logf(LOG_ERR, "Error in trying to read '%s': %s", vnc_password_file_path.c_str(), ex.what());
+        flashmq_logf(LOG_ERR, "Error in do_vnc_auth using '%s': %s", vnc_password_file_path.c_str(), ex.what());
+    }
+
+    return AuthResult::login_denied;
+}
+
+AuthResult flashmq_plugin_login_check(
+    void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
+    const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
+{
+    State *state = static_cast<State*>(thread_data);
+
+    FlashMQSockAddr addr;
+    memset(&addr, 0, sizeof(FlashMQSockAddr));
+    flashmq_get_client_address(client, nullptr, &addr);
+
+    if (state->match_local_net(addr.getAddr()))
+    {
+        return AuthResult::success;
+    }
+
+    if (do_vnc_auth(password) == AuthResult::success)
+    {
+        return AuthResult::success;
     }
 
     return AuthResult::login_denied;
