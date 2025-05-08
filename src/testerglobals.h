@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <memory>
 #include "queuedtasks.h"
+#include "vendor/flashmq_plugin.h"
 
 extern int testCount;
 extern int failCount;
@@ -22,6 +23,10 @@ inline bool fmq_compare(const T1 &t1, const T2 &t2, const char *actual, const ch
 
 namespace dbus_flashmq
 {
+
+AuthResult acl_check_helper(
+    void *thread_data, const AclAccess access, const std::string &clientid, const std::string &username,
+    const std::string &topic, const std::string &payload = "");
 
 class TesterGlobals
 {

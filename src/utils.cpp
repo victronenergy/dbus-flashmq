@@ -309,5 +309,3 @@ VrmPortalMode dbus_flashmq::parseVrmPortalMode(int val)
 
 
 
-
-
