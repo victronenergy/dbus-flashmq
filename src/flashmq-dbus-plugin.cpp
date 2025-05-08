@@ -7,11 +7,14 @@
 #include <string.h>
 #include <thread>
 #include <fstream>
+#include <optional>
 
 #include "state.h"
 #include "utils.h"
 
 // https://dbus.freedesktop.org/doc/api/html/index.html
+
+#define DBUS_MQTT_DEVICES_USERNAME "evcs" // TODO: real username pending answer.
 
 using namespace dbus_flashmq;
 
@@ -145,6 +148,60 @@ AuthResult do_vnc_auth(const std::string &password)
     return AuthResult::login_denied;
 }
 
+/**
+ * These are tokens set using the venus security API by the EVCS during the pairing process. This
+ * will probably be:
+ *
+ * {"AddUser": {"User": "evcs__HQ2401ABCDE", "Password": "machinegenerated"}}
+ *
+ * This is (probably) a temporary solution. We will probably interface with a Venus auth service
+ * at some point.
+ */
+std::optional<AuthResult> do_token_auth(const std::string &username, const std::string &password)
+{
+    // Example for password 'asdf': $2y$10$Gcbfb4OwelTnQy3yr2dbIOpyP4nJP0fjg2UeoMF4.JnyruWY4.j0S
+
+    try
+    {
+        const static std::string token_users_file = "/data/conf/users.txt";
+
+        if (!std::filesystem::exists(token_users_file))
+            return {};
+
+        std::ifstream infile(token_users_file);
+
+        if (!infile.is_open())
+        {
+            throw std::runtime_error("Error opening " + token_users_file);
+        }
+
+        for(std::string line; getline(infile, line ); )
+        {
+            const std::vector<std::string> password_line_fields = splitToVector(line, ':');
+
+            if (password_line_fields.size() != 2)
+            {
+                flashmq_logf(LOG_ERR, "(Lines in) file '%s' is not in the format 'username:hash'", token_users_file.c_str());
+                continue;
+            }
+
+            if (username == password_line_fields.at(0))
+            {
+                if (crypt_match(password, password_line_fields.at(1)))
+                    return AuthResult::success;
+                else
+                    return AuthResult::login_denied;
+            }
+        }
+    }
+    catch (std::exception &ex)
+    {
+        flashmq_logf(LOG_ERR, "Error in do_token_auth: %s", ex.what());
+    }
+
+    return {};
+}
+
 AuthResult flashmq_plugin_login_check(
     void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
     const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
@@ -154,10 +211,35 @@ AuthResult flashmq_plugin_login_check(
     FlashMQSockAddr addr;
     memset(&addr, 0, sizeof(FlashMQSockAddr));
     flashmq_get_client_address(client, nullptr, &addr);
+    const bool localhost_login = state->match_local_net(addr.getAddr());
 
-    if (state->match_local_net(addr.getAddr()))
+    if (username == DBUS_MQTT_DEVICES_USERNAME)
+    {
+        // We assume else where that this user is localhost, so we must force it.
+        return localhost_login ? AuthResult::success : AuthResult::login_denied;
+    }
+
+    if (localhost_login)
     {
         return AuthResult::success;
+    }
+
+    const std::optional<AuthResult> token_auth_result = do_token_auth(username, password);
+    if (token_auth_result)
+    {
+        return auth_success_or_delayed_fail(client, username, token_auth_result.value());
+    }
+
+    /*
+     * The normal security profile password has no specific username. So, we block any evcs user that does
+     * not appear in our user database (the do_token_auth check above this).
+     *
+     * This also means that in 'unsecured' mode, evcs users still require a password, even though the normal
+     * mqtt access doesn't.
+     */
+    if (username.rfind("evcs__", 0) == 0)
+    {
+        return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
     }
 
     if (do_vnc_auth(password) == AuthResult::success)
@@ -290,6 +372,42 @@ void handle_venus_actions(
 }
 
 /**
+ * Handles authorization checks for the EVCS pairing. As dbus-flashmq, we don't actually do anything with it. We only
+ * authorize.
+ *
+ * The authorization is implicit based on topic names and the username (which was approved on login). So, no permission
+ * databases need to be checked.
+ *
+ * Examples of EVCS pairing:
+ * - I/evcharger/HQ2401ABCDE/vregset/gx2evcs
+ * - I/evcharger/HQ2401ABCDE/vregset/evcs2gx
+ * - I/evcharger/HQ2401ABCDE/vregnotify
+ *
+ * Username example from the connecting EVCS: evcs__HQ2401ABCDE
+ */
+AuthResult evcharger_auth(
+    State *state, const AclAccess access, const std::string &clientid, const std::string &username,
+    const std::string &topic, const std::vector<std::string> &subtopics)
+{
+    (void)access;
+
+    if (username == DBUS_MQTT_DEVICES_USERNAME) // We know it's from localhost, because it's checked on login.
+    {
+        return AuthResult::success;
+    }
+
+    const std::string_view serial = get_substring_after("evcs__", username);
+
+    if (serial.empty())
+        return AuthResult::acl_denied;
+
+    if (serial != subtopics.at(2))
+        return AuthResult::acl_denied;
+
+    return AuthResult::success;
+}
+
+/**
  * @brief using ACL hook as 'on_message' handler.
  */
 AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, const std::string &clientid, const std::string &username,
@@ -311,16 +429,34 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
         const std::string &action = subtopics.at(0);
         const std::string &system_id = subtopics.at(1);
 
+        /*
+         * Can be like:
+         *
+         * - I/evcharger/HQ2401ABCDE/vregset/gx2evcs
+         * - I/<portalid>/in/ev/<vin>/heartbeat
+         */
+        if (action == "I")
+        {
+            if (system_id == "evcharger")
+                return evcharger_auth(state, access, clientid, username, topic, subtopics);
+
+            // TODO: these TODOs have answers peding:
+            // TODO: should the evcs username now be dbus-mqtt-devices? It's no longer just the evcs service.
+            // TODO: is I/<portalid> ever going to be done by LAN clients. I.E. should we block read/write?
+            if (!(username == DBUS_MQTT_DEVICES_USERNAME || client_id_is_bridge(clientid)))
+                return AuthResult::acl_denied;
+        }
+
         if (access == AclAccess::write)
         {
-            if ((action == "W" || action == "R" || action == "P") && system_id != state->unique_vrm_id)
+            if ((action == "W" || action == "R" || action == "P" || action == "I") && system_id != state->unique_vrm_id)
             {
                 flashmq_logf(LOG_ERR, "We received a '%s' request for '%s', but that's not us (but %s)",
                              action.c_str(), system_id.c_str(), state->unique_vrm_id.c_str());
 
                 /*
                  * With W and R we are normally the one acting on that, so we can still relay them to any
-                 * subscribers. But for P, we are ensuring nobody gets those to avoid other Venus services
+                 * subscribers. But for P and I, we are ensuring nobody gets those to avoid other Venus services
                  * mistakingly acting on them.
                  */
                 if (action == "W" || action == "R")
@@ -333,7 +469,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
              * We also block P/<portalid>/in for safety; that is currently also covered by not having an RPC bridge
              * connection in read-only mode, but that may not be a separate connection in the future anymore.
              */
-            if (action == "W" || (action == "P" && subtopics.size() >= 3 && subtopics.at(2) == "in"))
+            if (action == "W" || ((action == "P" || action == "I") && subtopics.size() >= 3 && subtopics.at(2) == "in"))
             {
                 if (client_id_is_bridge(clientid) && state->vrm_portal_mode != VrmPortalMode::Full)
                     return AuthResult::acl_denied;

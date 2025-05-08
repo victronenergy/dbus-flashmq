@@ -42,6 +42,7 @@ T get_random()
 bool client_id_is_bridge(const std::string &clientid);
 bool crypt_match(const std::string &phrase, const std::string &crypted);
 VrmPortalMode parseVrmPortalMode(int val);
+std::string_view get_substring_after(const std::string &prefix, const std::string &s);
 
 }
 

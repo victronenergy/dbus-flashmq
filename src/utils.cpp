@@ -304,7 +304,16 @@ VrmPortalMode dbus_flashmq::parseVrmPortalMode(int val)
     }
 }
 
+std::string_view dbus_flashmq::get_substring_after(const std::string &prefix, const std::string &s)
+{
+    const size_t pos = s.find(prefix);
 
+    if (pos == std::string::npos)
+        return {};
+
+    const size_t pos_after_prefix = pos + prefix.length();
+    return std::string_view(s.data() + pos_after_prefix, s.length() - pos_after_prefix);
+}
 
 
 
