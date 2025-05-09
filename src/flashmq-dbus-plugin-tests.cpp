@@ -8,10 +8,25 @@
 
 #define MAX_EVENTS 25
 
+void tests_init_once()
+{
+    testCount = 0;
+    failCount = 0;
+}
+
 using namespace dbus_flashmq;
+
+int pre_event_loop_test()
+{
+    FMQ_COMPARE(true, true);
+
+    return 0;
+}
 
 int main(int argc, char **argv)
 {
+    tests_init_once();
+
     if (!crypt_match("hallo", "$2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS"))
     {
         throw std::runtime_error("crypt test failed.");
@@ -28,6 +43,8 @@ int main(int argc, char **argv)
     flashmq_plugin_allocate_thread_memory(&data, pluginOpts);
 
     flashmq_plugin_init(data, pluginOpts, false);
+
+    pre_event_loop_test();
 
     struct epoll_event events[MAX_EVENTS];
     memset(&events, 0, sizeof (struct epoll_event)*MAX_EVENTS);
@@ -67,6 +84,9 @@ int main(int argc, char **argv)
 
     flashmq_plugin_deallocate_thread_memory(data, pluginOpts);
     flashmq_plugin_main_deinit(pluginOpts);
+
+    if (failCount > 0)
+        return 66;
 
     return 0;
 }

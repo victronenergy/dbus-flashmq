@@ -3,6 +3,27 @@
 #include <cstring>
 #include "vendor/flashmq_plugin.h"
 
+int testCount;
+int failCount;
+
+bool fmq_assert(bool b, const char *failmsg, const char *actual, const char *expected, const char *file, int line)
+{
+    testCount++;
+
+    if (!b)
+    {
+        failCount++;
+        printf("\033[01;31mFAIL\033[00m: '%s', %s != %s"
+               "\n  in %s, line %d\n", failmsg, actual, expected, file, line);
+    }
+    else
+    {
+        printf("\033[01;32mSUCCESS\033[00m: %s == %s\n", actual, expected);
+    }
+
+    return b;
+}
+
 using namespace dbus_flashmq;
 
 TesterGlobals::TesterGlobals()
