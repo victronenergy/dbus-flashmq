@@ -64,6 +64,7 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
     flashmq_publish_message(keepalive_topic.str(), 0, false, "1");
 
     state->start_one_second_timer();
+    state->start_one_minute_timer();
 }
 
 void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, std::string> &plugin_opts, bool reloading)
@@ -86,10 +87,13 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
     state->write_bridge_connection_state(BRIDGE_RPC, std::optional<bool>(), BRIDGE_DEACTIVATED_STRING);
 }
 
-AuthResult auth_success_or_delayed_fail(const std::weak_ptr<Client> &client, const std::string &username, AuthResult result)
+AuthResult auth_success_or_delayed_fail(State *state, const std::weak_ptr<Client> &client, const std::string &username, const std::string &clientid, AuthResult result)
 {
     if (result == AuthResult::success)
+    {
+        state->register_user_and_clientid(username, clientid);
         return AuthResult::success;
+    }
 
     auto f = [client, result]() {
         flashmq_continue_async_authentication(client, result, "", "");
@@ -157,15 +161,15 @@ AuthResult flashmq_plugin_login_check(
 
     if (state->match_local_net(addr.getAddr()))
     {
-        return AuthResult::success;
+        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::success);
     }
 
     if (do_vnc_auth(password) == AuthResult::success)
     {
-        return AuthResult::success;
+        return auth_success_or_delayed_fail(state, client, username,clientid, AuthResult::success);
     }
 
-    return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
+    return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
