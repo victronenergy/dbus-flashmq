@@ -362,6 +362,12 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
         }
         else if (access == AclAccess::read)
         {
+            // Just means other MQTT clients can't see it. Doesn't affect Venus Platform.
+            if (action == "W" && subtopics.size() >= 3 && subtopics.at(2) == "platform" && topic.find("/Security/Api") != std::string::npos)
+            {
+                return AuthResult::acl_denied;
+            }
+
             /*
              * The if-statements below stop traffic over the bridge if there is no VRM interest. However, we only
              * limit our own N (notifications), to avoid accidentally denying other things.
