@@ -618,11 +618,9 @@ void State::initiate_broker_registration(uint32_t delay)
 void State::per_second_action()
 {
     this->period_task_id = 0;
+    start_one_second_timer();
 
     this->keepAliveTokens = KEEPALIVE_TOKENS;
-
-    auto f = std::bind(&State::per_second_action, this);
-    this->period_task_id = flashmq_add_task(f, ONE_SECOND_TIMER_INTERVAL);
 }
 
 void State::start_one_second_timer()
