@@ -146,3 +146,13 @@ void flashmq_continue_async_authentication(const std::weak_ptr<Client> &client, 
 {
 
 }
+
+void flashmq_get_session_pointer(const std::string &clientid, const std::string &username, std::weak_ptr<Session> &sessionOut)
+{
+
+}
+
+void flashmq_get_client_pointer(const std::weak_ptr<Session> &session, std::weak_ptr<Client> &clientOut)
+{
+
+}

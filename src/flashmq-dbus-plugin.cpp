@@ -154,12 +154,20 @@ AuthResult flashmq_plugin_login_check(
 
     State *state = static_cast<State*>(thread_data);
 
-    FlashMQSockAddr addr;
-    memset(&addr, 0, sizeof(FlashMQSockAddr));
-    flashmq_get_client_address(client, nullptr, &addr);
-
-    if (state->match_local_net(addr.getAddr()))
+    /*
+     * The local_username of the bridge does not go through flashmq_plugin_login_check(), so seeing this username
+     * is always an imposter.
+     */
+    if (username_is_bridge(username))
     {
+        return AuthResult::acl_denied;
+    }
+
+    if (state->localhost_client(client))
+    {
+        // Localhost is / can be Nginx-proxied and auth'ed connection, meaning GUIv2.
+        state->privileged_network_clients.insert(client);
+
         return AuthResult::success;
     }
 
@@ -171,6 +179,9 @@ AuthResult flashmq_plugin_login_check(
 
     if (do_vnc_auth(password) == AuthResult::success)
     {
+        // The VNC password is the security profile password, so it's privileged.
+        state->privileged_network_clients.insert(client);
+
         return AuthResult::success;
     }
 
@@ -220,7 +231,7 @@ bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid
 }
 
 void handle_venus_actions(
-    State *state, const std::string &action, const std::string &system_id, const std::string clientid,
+    State *state, const std::string &action, const std::string &system_id, const std::string &username,
     const std::string &topic, const std::vector<std::string> &subtopics, std::string_view payload)
 {
     // Wo only work on strings like R/<portalid>/system/0/Serial.
@@ -230,7 +241,7 @@ void handle_venus_actions(
          * Because we also need to respond to reads and writes from remote clients when the system is not alive, we need
          * to consider any AclAccess::write activity as interest.
          */
-        if (client_id_is_bridge(clientid))
+        if (username_is_bridge(username))
             state->vrmBridgeInterestTime = std::chrono::steady_clock::now();
 
         // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
@@ -334,6 +345,15 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
 
         if (access == AclAccess::write)
         {
+            if (action == "W" && subtopics.size() >= 3 && subtopics.at(2) == "platform" && topic.find("/Security/Api") != std::string::npos)
+            {
+                if (!state->is_privileged_user(clientid, username))
+                {
+                    flashmq_logf(LOG_WARNING, "Attempt to invoke platform security API by non-privileged user.");
+                    return AuthResult::acl_denied;
+                }
+            }
+
             if ((action == "W" || action == "R" || action == "P") && system_id != state->unique_vrm_id)
             {
                 flashmq_logf(LOG_ERR, "We received a '%s' request for '%s', but that's not us (but %s)",
@@ -356,7 +376,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
              */
             if (action == "W" || (action == "P" && subtopics.size() >= 3 && subtopics.at(2) == "in"))
             {
-                if (client_id_is_bridge(clientid) && state->vrm_portal_mode != VrmPortalMode::Full)
+                if (username_is_bridge(username) && state->vrm_portal_mode != VrmPortalMode::Full)
                     return AuthResult::acl_denied;
             }
 
@@ -379,7 +399,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             }
 
             // The rest is not auth as such, but take actions based on the messages.
-            handle_venus_actions(state, action, system_id, clientid, topic, subtopics, payload);
+            handle_venus_actions(state, action, system_id, username, topic, subtopics, payload);
         }
         else if (access == AclAccess::read)
         {
@@ -399,7 +419,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                 return AuthResult::success;
 
             // We still allow normal cross-client behavior when it's all on LAN.
-            if (!client_id_is_bridge(clientid))
+            if (!username_is_bridge(username))
                 return AuthResult::success;
 
             if (std::chrono::steady_clock::now() > state->vrmBridgeInterestTime + std::chrono::seconds(VRM_INTEREST_TIMEOUT_SECONDS))
@@ -484,3 +504,20 @@ void flashmq_plugin_poll_event_received(void *thread_data, int fd, uint32_t even
         }
     }
 }
+
+void flashmq_plugin_periodic_event(void *thread_data)
+{
+    if (!thread_data)
+        return;
+
+    State *state = static_cast<State*>(thread_data);
+
+    state->clear_expired_privileged_clients();
+}
+
+
+
+
+
+
+

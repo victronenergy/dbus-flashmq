@@ -264,9 +264,9 @@ std::string dbus_flashmq::dbus_message_get_error_name_safe(DBusMessage *msg)
     return result;
 }
 
-bool dbus_flashmq::client_id_is_bridge(const std::string &clientid)
+bool dbus_flashmq::username_is_bridge(const std::string &username)
 {
-    return clientid.rfind("GXdbus_", 0) == 0 || clientid.rfind("GXrpc_", 0) == 0;
+    return username == "GXdbus" || username == "GXrpc";
 }
 
 /**

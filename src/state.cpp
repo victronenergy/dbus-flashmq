@@ -974,3 +974,69 @@ bool BridgeConnectionState::operator==(const BridgeConnectionState &other) const
 {
     return msg == other.msg && connected == other.connected;
 }
+
+
+void State::clear_expired_privileged_clients()
+{
+    for (auto _ = this->privileged_network_clients.begin(); _ != this->privileged_network_clients.end();)
+    {
+        auto cur = _++;
+
+        if (cur->expired())
+            this->privileged_network_clients.erase(cur);
+    }
+}
+
+bool State::localhost_client(const std::weak_ptr<Client> &client) const
+{
+    if (client.expired())
+        return false;
+
+    FlashMQSockAddr addr;
+    memset(&addr, 0, sizeof(FlashMQSockAddr));
+    flashmq_get_client_address(client, nullptr, &addr);
+    bool result = this->match_local_net(addr.getAddr());
+    return result;
+}
+
+/**
+ * Result can be used in direct boolean expression, but it also gives you the client if you want it,
+ * for a localhost-check for instance.
+ */
+IsPrivilegedUser State::is_privileged_user(const std::string &clientid, const std::string &username) const
+{
+    IsPrivilegedUser result;
+
+    if (username_is_bridge(username))
+    {
+        result.privileged = true;
+        return result;
+    }
+
+    std::weak_ptr<Session> session;
+    flashmq_get_session_pointer(clientid, username, session);
+
+    if (session.expired())
+    {
+        result.privileged = false;
+        return result;
+    }
+
+    std::weak_ptr<Client> client;
+    flashmq_get_client_pointer(session, client);
+
+    if (client.expired())
+    {
+        result.privileged = false;
+        return result;
+    }
+
+    result.privileged = this->privileged_network_clients.count(client) > 0;
+    result.client = client;
+    return result;
+}
+
+const std::weak_ptr<Client> &IsPrivilegedUser::get_client() const
+{
+    return this->client;
+}
