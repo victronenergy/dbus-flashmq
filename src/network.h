@@ -31,17 +31,20 @@ SOFTWARE.
 
 #include <arpa/inet.h>
 #include <string>
-#include <memory>
+#include <array>
 
 namespace dbus_flashmq
 {
+
+sa_family_t getFamilyFromSockAddr(const sockaddr *addr);
 
 /**
  * @brief The Network class is taken from FlashMQ main.
  */
 class Network
 {
-    sockaddr_in6 data;
+    std::array<char, sizeof(struct sockaddr_storage)> data;
+    sa_family_t family = AF_UNSPEC;
 
     uint32_t in_mask = 0;
 
@@ -51,8 +54,6 @@ class Network
 public:
     Network(const std::string &network);
     bool match(const struct sockaddr *addr) const ;
-    bool match(const struct sockaddr_in *addr) const ;
-    bool match(const struct sockaddr_in6 *addr) const;
 };
 
 }
