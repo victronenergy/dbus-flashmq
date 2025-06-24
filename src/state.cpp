@@ -621,6 +621,7 @@ void State::per_second_action()
     start_one_second_timer();
 
     this->keepAliveTokens = KEEPALIVE_TOKENS;
+    this->loginTokens = std::min<int>(LOGIN_TOKENS, this->loginTokens + 1);
 }
 
 void State::start_one_second_timer()

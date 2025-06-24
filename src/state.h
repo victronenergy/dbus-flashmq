@@ -17,6 +17,7 @@
 #define VRM_INTEREST_TIMEOUT_SECONDS 130
 #define KEEPALIVE_TOKENS 3
 #define ONE_SECOND_TIMER_INTERVAL 1000
+#define LOGIN_TOKENS 20
 
 namespace dbus_flashmq
 {
@@ -106,6 +107,8 @@ struct State
     std::chrono::time_point<std::chrono::steady_clock> vrmBridgeInterestTime;
     int keepAliveTokens = KEEPALIVE_TOKENS;
     bool warningAboutNTopicsLogged = false;
+
+    int loginTokens = LOGIN_TOKENS;
 
     std::vector<Network> local_nets;
 

@@ -149,6 +149,9 @@ AuthResult flashmq_plugin_login_check(
     void *thread_data, const std::string &clientid, const std::string &username, const std::string &password,
     const std::vector<std::pair<std::string, std::string>> *userProperties, const std::weak_ptr<Client> &client)
 {
+    if (!thread_data)
+        return AuthResult::error;
+
     State *state = static_cast<State*>(thread_data);
 
     FlashMQSockAddr addr;
@@ -159,6 +162,10 @@ AuthResult flashmq_plugin_login_check(
     {
         return AuthResult::success;
     }
+
+    if (state->loginTokens <= 0)
+        return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
+    state->loginTokens--;
 
     if (do_vnc_auth(password) == AuthResult::success)
     {
