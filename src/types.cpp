@@ -298,7 +298,7 @@ std::string Item::as_json()
     if (!cache_json.v.empty())
         return cache_json.v;
 
-    const bool mask = is_pincode();
+    const bool mask = is_pincode() || is_ap_password();
     nlohmann::json j { {"value", value.value.as_json_value(mask)} };
 
     if (value.min)
@@ -394,6 +394,11 @@ const std::string &Item::get_service_name() const
 bool Item::should_be_retained() const
 {
     return short_service_name.service_type == "system" && path.get() == "/Serial";
+}
+
+bool Item::is_ap_password() const
+{
+    return short_service_name.service_type == "settings" && path.get() == "/Settings/Services/AccessPointPassword";
 }
 
 bool Item::is_pincode() const

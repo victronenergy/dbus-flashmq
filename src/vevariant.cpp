@@ -381,9 +381,7 @@ nlohmann::json VeVariant::as_json_value(bool mask) const
     {
         if (mask)
         {
-            std::string val = str;
-            std::transform(val.begin(), val.end(), val.begin(), [](char c) {return '*';});
-            return val;
+            return "******";
         }
         return str;
     }
