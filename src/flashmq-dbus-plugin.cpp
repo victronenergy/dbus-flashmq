@@ -163,15 +163,29 @@ AuthResult flashmq_plugin_login_check(
         return AuthResult::success;
     }
 
-    if (state->loginTokens <= 0)
+    if (state->loginTokensShortTerm <= 0 || state->loginTokensLongTerm <= 0)
+    {
+        flashmq_logf(LOG_WARNING, "Login rate-limited: short-term-left=%d long-term-left=%d", state->loginTokensShortTerm, state->loginTokensLongTerm);
         return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
+    }
 
     if (do_vnc_auth(password) == AuthResult::success)
     {
         return AuthResult::success;
     }
 
-    state->loginTokens--;
+    /*
+     * We only count unseen attempts. When some integration uses a wrong/changed password and keeps trying, we
+     * should not trip the rate limiter.
+     */
+    if (state->passwordHistory.count(password) == 0)
+    {
+        state->decrement_login_tokens();
+
+        if (state->passwordHistory.size() < LOGIN_TOKENS_LONG_TERM) // protect memory use
+            state->passwordHistory.insert(password);
+    }
+
     return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
 }
 

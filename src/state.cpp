@@ -621,7 +621,16 @@ void State::per_second_action()
     start_one_second_timer();
 
     this->keepAliveTokens = KEEPALIVE_TOKENS;
-    this->loginTokens = std::min<int>(LOGIN_TOKENS, this->loginTokens + 1);
+    this->loginTokensShortTerm = std::min<int>(LOGIN_TOKENS_SHORT_TERM, this->loginTokensShortTerm + 1);
+
+    if (this->longTermLoginTokensResetAt + std::chrono::hours(24) < std::chrono::steady_clock::now())
+    {
+        flashmq_logf(LOG_INFO, "Resetting long term login rate-limit state.");
+
+        this->loginTokensLongTerm = LOGIN_TOKENS_LONG_TERM;
+        this->longTermLoginTokensResetAt = std::chrono::steady_clock::now();
+        this->passwordHistory.clear();
+    }
 }
 
 void State::start_one_second_timer()
@@ -739,6 +748,15 @@ void State::write_all_bridge_connection_states_debounced()
     };
 
     write_all_bridge_states_task_id = flashmq_add_task(f, 2000);
+}
+
+void State::decrement_login_tokens()
+{
+    if (loginTokensShortTerm > 0)
+        loginTokensShortTerm--;
+
+    if (loginTokensLongTerm > 0)
+        loginTokensLongTerm--;
 }
 
 void State::scan_all_dbus_services()

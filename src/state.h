@@ -11,13 +11,15 @@
 #include "types.h"
 #include <thread>
 #include <optional>
+#include <unordered_set>
 #include "serviceidentifier.h"
 #include "network.h"
 
 #define VRM_INTEREST_TIMEOUT_SECONDS 130
 #define KEEPALIVE_TOKENS 3
 #define ONE_SECOND_TIMER_INTERVAL 1000
-#define LOGIN_TOKENS 20
+#define LOGIN_TOKENS_SHORT_TERM 20
+#define LOGIN_TOKENS_LONG_TERM 150
 
 namespace dbus_flashmq
 {
@@ -108,7 +110,10 @@ struct State
     int keepAliveTokens = KEEPALIVE_TOKENS;
     bool warningAboutNTopicsLogged = false;
 
-    int loginTokens = LOGIN_TOKENS;
+    std::unordered_set<std::string> passwordHistory;
+    int loginTokensShortTerm = LOGIN_TOKENS_SHORT_TERM;
+    int loginTokensLongTerm = LOGIN_TOKENS_LONG_TERM;
+    std::chrono::time_point<std::chrono::steady_clock> longTermLoginTokensResetAt;
 
     std::vector<Network> local_nets;
 
@@ -145,6 +150,7 @@ struct State
     bool match_local_net(const struct sockaddr *addr) const;
     void write_bridge_connection_state(const std::string &bridge, const std::optional<bool> connected, const std::string &msg);
     void write_all_bridge_connection_states_debounced();
+    void decrement_login_tokens();
 };
 
 }
