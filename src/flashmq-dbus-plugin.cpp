@@ -165,13 +165,13 @@ AuthResult flashmq_plugin_login_check(
 
     if (state->loginTokens <= 0)
         return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
-    state->loginTokens--;
 
     if (do_vnc_auth(password) == AuthResult::success)
     {
         return AuthResult::success;
     }
 
+    state->loginTokens--;
     return auth_success_or_delayed_fail(client, username, AuthResult::login_denied);
 }
 
