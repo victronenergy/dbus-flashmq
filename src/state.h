@@ -94,6 +94,7 @@ struct State
     std::map<std::string, bool> bridges_connected;
     std::unordered_map<std::string, BridgeConnectionState> bridge_connection_states;
     std::unordered_map<std::string, BridgeConnectionState> bridge_connection_states_last_written;
+    std::unordered_map<std::string, std::unordered_set<std::string>> users_to_clientids;
     bool do_online_registration = true;
 
     std::set<std::weak_ptr<Client>, std::owner_less<std::weak_ptr<Client>>> privileged_network_clients;
@@ -172,6 +173,9 @@ struct State
     void clear_expired_privileged_clients();
     bool localhost_client(const std::weak_ptr<Client> &client) const;
     IsPrivilegedUser is_privileged_user(const std::string &clientid, const std::string &username) const;
+    void register_user_and_clientid(const std::string &username, const std::string &clientid);
+    void disconnect_all_connections_of_user(const std::string &username);
+    void purge_old_usernames_to_clientids();
 };
 
 }
