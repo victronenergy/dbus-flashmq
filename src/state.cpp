@@ -992,10 +992,12 @@ bool State::localhost_client(const std::weak_ptr<Client> &client) const
     if (client.expired())
         return false;
 
-    FlashMQSockAddr addr;
-    memset(&addr, 0, sizeof(FlashMQSockAddr));
-    flashmq_get_client_address(client, nullptr, &addr);
-    bool result = this->match_local_net(addr.getAddr());
+    struct sockaddr_storage addr_mem;
+    struct sockaddr *addr = reinterpret_cast<sockaddr*>(&addr_mem);
+    socklen_t addrlen = sizeof(addr_mem);
+
+    flashmq_get_client_address_v4(client, nullptr, addr, &addrlen);
+    bool result = this->match_local_net(addr);
     return result;
 }
 

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <cstring>
 
 #include "testerglobals.h"
 
@@ -109,37 +110,15 @@ void flashmq_publish_message(const std::string &topic, const uint8_t qos, const 
  * @param text
  * @param addr
  */
-void flashmq_get_client_address(const std::weak_ptr<Client> &client, std::string *text, FlashMQSockAddr *addr)
+void flashmq_get_client_address_v4(const std::weak_ptr<Client> &client, std::string *text, sockaddr *addr, socklen_t *addrlen)
 {
-    std::shared_ptr<Client> c = client.lock();
+    if (addr && addrlen)
+        std::memset(addr, 0, *addrlen);
 
-    if (!c)
-        return;
+    // DUMMY; doesn't do anytyhing.
 
     if (text)
-        *text = "dummy-we-dont-know";
-
-    if (addr)
-    {
-        struct sockaddr_in dummy_addr;
-        memset(&dummy_addr, 0, sizeof(struct sockaddr_in));
-
-        inet_pton(AF_INET, "127.0.0.1", &dummy_addr.sin_addr);
-        dummy_addr.sin_family = AF_INET;
-        dummy_addr.sin_port = htons(666);
-
-        memcpy(addr->getAddr(), &dummy_addr, addr->getLen());
-    }
-}
-
-sockaddr *FlashMQSockAddr::getAddr()
-{
-    return reinterpret_cast<struct sockaddr*>(&this->addr_in6);
-}
-
-constexpr int FlashMQSockAddr::getLen()
-{
-    return sizeof(struct sockaddr_in6);
+        *text = "dummy";
 }
 
 void flashmq_continue_async_authentication(const std::weak_ptr<Client> &client, AuthResult result, const std::string &authMethod, const std::string &returnData)
