@@ -33,7 +33,8 @@ std::string ShortServiceName::make_short(std::string service)
 
 ShortServiceName::ShortServiceName(const std::string &service, const ServiceIdentifier &instance) :
     std::string(get_value(service, instance)),
-    service_type(make_short(service))
+    service_type(make_short(service)),
+    instance(instance.getValue())
 {
 
 }

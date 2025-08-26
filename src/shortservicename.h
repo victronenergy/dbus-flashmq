@@ -14,6 +14,7 @@ class ShortServiceName : public std::string
     static std::string make_short(std::string service);
 public:
     std::string service_type;
+    std::string instance;
     ShortServiceName(const std::string &service, const ServiceIdentifier &instance);
     ShortServiceName();
 };
