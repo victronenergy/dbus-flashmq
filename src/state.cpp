@@ -507,7 +507,7 @@ void State::set_new_id_to_owner(const std::string &owner, const std::string &nam
  */
 void State::get_named_owner(std::string &sender) const
 {
-    if (sender.find("com.victronenergy") == std::string::npos)
+    if (!sender.starts_with("com.victronenergy"))
     {
         auto pos = service_id_to_names.find(sender);
         if (pos != service_id_to_names.end())
@@ -782,7 +782,7 @@ void State::scan_all_dbus_services()
 
         for(const std::string &service : services)
         {
-            if (service.find("com.victronenergy") == std::string::npos)
+            if (!service.starts_with("com.victronenergy"))
                 continue;
 
             state->scan_dbus_service(service);

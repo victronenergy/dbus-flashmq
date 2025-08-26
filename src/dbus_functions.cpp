@@ -233,7 +233,7 @@ DBusHandlerResult dbus_flashmq::dbus_handle_message(DBusConnection *connection, 
                 std::string oldowner(_oldowner);
                 std::string newowner(_newowner);
 
-                if (name.find("com.victronenergy.") == std::string::npos)
+                if (!name.starts_with("com.victronenergy."))
                     return DBusHandlerResult::DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
                 if (!newowner.empty())
@@ -255,7 +255,7 @@ DBusHandlerResult dbus_flashmq::dbus_handle_message(DBusConnection *connection, 
             state->get_named_owner(sender);
             //flashmq_logf(LOG_DEBUG, "Received signal: '%s' by '%s'", signal_name.c_str(), sender.c_str());
 
-            if (sender.find("com.victronenergy") != std::string::npos)
+            if (sender.starts_with("com.victronenergy."))
             {
                 // The preferred signal, containing multiple items. The format is used by both ItemsChanged and the method call GetItems.
                 if (strcmp(signal_name.c_str(), "ItemsChanged") == 0)

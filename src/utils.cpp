@@ -70,7 +70,7 @@ std::vector<std::string> dbus_flashmq::splitToVector(const std::string &input, c
 
 std::string dbus_flashmq::get_service_type(const std::string &service)
 {
-    if (service.find("com.victronenergy.") == std::string::npos)
+    if (!service.starts_with("com.victronenergy."))
         throw std::runtime_error("Not a victron service");
 
     const std::vector<std::string> parts = splitToVector(service, '.');

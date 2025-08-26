@@ -18,7 +18,7 @@ std::string ShortServiceName::get_value(const std::string &service, const Servic
 
 std::string ShortServiceName::make_short(std::string service)
 {
-    if (service.find("com.victronenergy.") != std::string::npos)
+    if (service.starts_with("com.victronenergy."))
     {
         const std::vector<std::string> parts = splitToVector(service, '.');
         service = parts.at(2);
