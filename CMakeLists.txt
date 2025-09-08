@@ -4,6 +4,12 @@ cmake_policy(SET CMP0048 NEW)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (DBUS_FMQ_ASAN)
+    message("Building with ASAN.")
+    add_compile_options(-fsanitize=address)
+    add_link_options(-fsanitize=address)
+endif()
+
 project(flashmq-dbus-plugin VERSION 0.0.1 LANGUAGES CXX)
 
 add_compile_options(-Wall -Wno-psabi)
