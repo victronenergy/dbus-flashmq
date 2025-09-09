@@ -151,7 +151,8 @@ AuthResult do_vnc_auth(const std::string &password)
 /**
  * These are tokens set for pairing, like:
  *
- *   curl --include   --insecure --user "remoteconsole:securityprofilepassword" -X POST -d "role=evcharger&device_id=mydevice123" 'https://venus.local/auth/generate-token.php'
+ *   curl --insecure --user "remoteconsole:securityprofilepassword" -X POST \
+ *     -d "role=evcharger&device_id=mydevice123" 'https://venus.local/auth/generate-token/'
  *
  * Answer: {"token_name":"token/evcharger/mydevice123","password":"hfNWPw7UmCKg4CiSZ1CKnnkjlBbArStO"}
  *
