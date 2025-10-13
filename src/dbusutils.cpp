@@ -302,3 +302,21 @@ std::string dbus_flashmq::get_string_from_reply(DBusMessage *msg)
     std::string result(val.str);
     return result;
 }
+
+std::optional<dbus_int32_t> dbus_flashmq::get_return_code_from_reply(DBusMessage *msg)
+{
+    const int msg_type = dbus_message_get_type(msg);
+
+    if (msg_type != DBUS_MESSAGE_TYPE_METHOD_RETURN)
+        return {};
+
+    DBusMessageIter iter;
+    dbus_message_iter_init(msg, &iter);
+
+    if (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_INT32)
+        return {};
+
+    DBusBasicValue val;
+    dbus_message_iter_get_basic(&iter, &val);
+    return val.i32;
+}
