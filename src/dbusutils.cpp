@@ -305,6 +305,9 @@ std::string dbus_flashmq::get_string_from_reply(DBusMessage *msg)
 
 std::optional<dbus_int32_t> dbus_flashmq::get_return_code_from_reply(DBusMessage *msg)
 {
+    if (msg == nullptr)
+        return {};
+
     const int msg_type = dbus_message_get_type(msg);
 
     if (msg_type != DBUS_MESSAGE_TYPE_METHOD_RETURN)

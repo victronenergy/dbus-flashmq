@@ -312,39 +312,116 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
 {
     flashmq_logf(LOG_DEBUG, "[Write] Writing '%s' to '%s'", payload.c_str(), topic.c_str());
 
-    const nlohmann::json j = nlohmann::json::parse(payload);
+    auto set_value_handler = [](
+            State *state, const std::string &topic, const std::optional<int64_t> &veitem_call_serial, const std::optional<std::string> &caller_id,
+            const std::optional<std::string> &ex_message, DBusMessage *msg) {
+        int log_type = LOG_NONE;
+        std::ostringstream log_msg;
+        std::optional<std::string> bus_error;
 
-    auto jpos = j.find("value");
-    if (jpos == j.end())
-        throw ValueError("Can't find 'value' in json.");
-
-    nlohmann::json::value_type json_value = *jpos;
-
-    const Item &item = find_item_by_mqtt_path(topic);
-
-    VeVariant new_value(json_value);
-
-    flashmq_logf(LOG_DEBUG, "[Write] Determined dbus type of '%s' as '%s'", json_value.dump().c_str(), new_value.get_dbus_type_as_string_recursive().c_str());
-
-    std::vector<VeVariant> args;
-    args.push_back(new_value);
-    dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "SetValue", args, true);
-
-    auto set_value_handler = [](State *state, const std::string &topic, DBusMessage *msg) {
-        const int msg_type = dbus_message_get_type(msg);
-
-        if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
+        if (ex_message)
+            bus_error = ex_message;
+        else if (msg)
         {
-            std::string error = dbus_message_get_error_name_safe(msg);
-            flashmq_logf(LOG_ERR, "Error on 'SetValue' on %s: %s", topic.c_str(), error.c_str());
-            return;
+            int msg_type = dbus_message_get_type(msg);
+
+            if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
+            {
+                bus_error = "";
+                bus_error = dbus_message_get_error_name_safe(msg);
+            }
+        }
+        else
+            throw std::runtime_error("Call with either exception or dbus message");
+
+        if (bus_error)
+        {
+            log_type = LOG_ERR;
+            log_msg << "Error on 'SetValue'";
+            if (veitem_call_serial)
+                log_msg << " with serial '" << veitem_call_serial.value() << "' ";
+            if (caller_id)
+                log_msg << " by '" << caller_id.value() << "' ";
+            log_msg << " on '" << topic << "': " << bus_error.value();
+        }
+        else
+        {
+            log_type = LOG_DEBUG;
+            log_msg << "Success on 'SetValue'";
+            if (veitem_call_serial)
+                log_msg << " with serial '" << veitem_call_serial.value() << "' ";
+            if (caller_id)
+                log_msg << " by '" << caller_id.value() << "' ";
+            log_msg << " on '" << topic << "'.";
         }
 
-        flashmq_logf(LOG_DEBUG, "SetValue on '%s' successful.", topic.c_str());
+        flashmq_logf(log_type, log_msg.str().c_str());
+
+        if (veitem_call_serial && caller_id)
+        {
+            nlohmann::json j { {"serial", veitem_call_serial.value()}, {"caller_id", caller_id.value()} };
+            const auto return_code = get_return_code_from_reply(msg);
+
+            if (return_code)
+                j["return_code"] = return_code.value();
+
+            if (bus_error)
+                j["bus_error"] = bus_error.value();
+
+            if (topic.length() > 0 && topic.at(0) == 'W')
+            {
+                std::string response_topic = topic;
+                response_topic.at(0) = 'S';
+                // We always do QoS 0. Getting buffered messages from before connection loss will only confuse people at this point.
+                flashmq_publish_message(response_topic, 0, false, j.dump());
+            }
+        }
     };
 
-    auto handler = std::bind(set_value_handler, this, topic, std::placeholders::_1);
-    this->async_handlers[serial] = handler;
+    std::optional<int64_t> veitem_call_serial;
+    std::optional<std::string> caller_id;
+
+    try
+    {
+        const nlohmann::json j = nlohmann::json::parse(payload);
+
+        {
+            auto serial_pos = j.find("serial");
+            if (serial_pos != j.end() && serial_pos->is_number_integer())
+            {
+                veitem_call_serial = serial_pos->get<int64_t>();
+            }
+
+            auto caller_id_pos = j.find("caller_id");
+            if (caller_id_pos != j.end() && caller_id_pos->is_string())
+            {
+                caller_id = caller_id_pos->get<std::string>();
+            }
+        }
+
+        auto jpos = j.find("value");
+        if (jpos == j.end())
+            throw ValueError("Can't find 'value' in json.");
+
+        nlohmann::json::value_type json_value = *jpos;
+
+        const Item &item = find_item_by_mqtt_path(topic);
+
+        VeVariant new_value(json_value);
+
+        flashmq_logf(LOG_DEBUG, "[Write] Determined dbus type of '%s' as '%s'", json_value.dump().c_str(), new_value.get_dbus_type_as_string_recursive().c_str());
+
+        std::vector<VeVariant> args;
+        args.push_back(new_value);
+        dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "SetValue", args, true);
+
+        auto handler = std::bind(set_value_handler, this, topic, veitem_call_serial, caller_id, std::optional<std::string>(), std::placeholders::_1);
+        this->async_handlers[serial] = handler;
+    }
+    catch (std::exception &ex)
+    {
+        set_value_handler(this, topic, veitem_call_serial, caller_id, ex.what(), nullptr);
+    }
 }
 
 ServiceIdentifier State::store_and_get_instance_from_service(const std::string &service, const std::unordered_map<std::string, Item> &items, bool instance_must_be_known)
