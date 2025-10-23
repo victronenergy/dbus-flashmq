@@ -612,10 +612,25 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
         {
             const char action_char = action.length() == 1 ? action[0] : 0;
 
-            // Just means other MQTT clients can't see it. Doesn't affect Venus Platform.
-            if (action_char == 'W' && subtopics.size() >= 3 && subtopics.at(2) == "platform" && topic.find("/Security/Api") != std::string::npos)
+            /*
+             * Just means other MQTT clients can't see it. Doesn't affect ourselves or dbus communications.
+             *
+             * Denying all W reads is not really possible anymore. Our own apps don't use those, but custom
+             * integrations might.
+             */
+            if (action_char == 'W')
             {
-                return AuthResult::acl_denied;
+                if (subtopics.size() >= 3 && subtopics.at(2) == "platform" && topic.find("/Security/Api") != std::string::npos)
+                    return AuthResult::acl_denied;
+
+                if (subtopics.size() >= 7 && subtopics.at(2) == "settings" && subtopics.at(6) == "AccessPointPassword")
+                    return AuthResult::acl_denied;
+
+                std::string lower_topic = topic;
+                str_make_lower(lower_topic);
+
+                if (lower_topic.find("password") != std::string::npos)
+                    return AuthResult::acl_denied;
             }
 
             /*
