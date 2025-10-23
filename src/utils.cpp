@@ -304,7 +304,15 @@ VrmPortalMode dbus_flashmq::parseVrmPortalMode(int val)
     }
 }
 
+std::string &dbus_flashmq::str_make_lower(std::string &s)
+{
+    for (char &c : s)
+    {
+        c = std::tolower(c);
+    }
 
+    return s;
+}
 
 
 

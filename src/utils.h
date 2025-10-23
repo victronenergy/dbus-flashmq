@@ -25,6 +25,7 @@ void trim(std::string &s);
 std::string get_stdout_from_process(const std::string &process);
 std::string get_stdout_from_process(const std::string &process, pid_t &out_pid);
 std::string dbus_message_get_error_name_safe(DBusMessage *msg);
+std::string &str_make_lower(std::string &s);
 
 int16_t s_to_int16(const std::string &s);
 uint8_t s_to_uint8(const std::string &s);
