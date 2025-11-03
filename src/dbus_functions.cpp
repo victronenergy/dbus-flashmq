@@ -276,6 +276,16 @@ DBusHandlerResult dbus_flashmq::dbus_handle_message(DBusConnection *connection, 
                 }
             }
 
+            const char *_interface = dbus_message_get_interface(message);
+            const std::string interface(_interface ? _interface : "");
+
+            if (strcmp(interface.c_str(), "com.victronenergy.TokenUsers") == 0 && strcmp(signal_name.c_str(), "UserRemoved") == 0)
+            {
+                std::string token_name = get_string_from_reply(message);
+                state->disconnect_all_connections_of_user(token_name);
+                return DBusHandlerResult::DBUS_HANDLER_RESULT_HANDLED;
+            }
+
             flashmq_logf(LOG_INFO, "Unhandled signal: '%s' by '%s'", signal_name.c_str(), sender.c_str());
         }
     }

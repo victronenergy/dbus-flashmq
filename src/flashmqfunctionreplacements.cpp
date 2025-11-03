@@ -135,3 +135,8 @@ void flashmq_get_client_pointer(const std::weak_ptr<Session> &session, std::weak
 {
 
 }
+
+void flashmq_plugin_remove_client_v4(const std::weak_ptr<Session> &session, bool alsoSession, ServerDisconnectReasons reasonCode)
+{
+    (void)session; (void) alsoSession; (void)reasonCode;
+}
