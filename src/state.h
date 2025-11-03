@@ -162,7 +162,7 @@ struct State
     void heartbeat();
     void publish_all(const std::optional<std::string> &payload_echo);
     void set_new_id_to_owner(const std::string &owner, const std::string &name);
-    std::string get_named_owner(std::string sender) const;
+    void get_named_owner(std::string &sender) const;
     void remove_id_to_owner(const std::string &owner);
     void handle_read(const std::string &topic);
     void initiate_broker_registration(uint32_t delay);

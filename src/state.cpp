@@ -505,7 +505,7 @@ void State::set_new_id_to_owner(const std::string &owner, const std::string &nam
  * @param sender Like 1:31
  * @return
  */
-std::string State::get_named_owner(std::string sender) const
+void State::get_named_owner(std::string &sender) const
 {
     if (sender.find("com.victronenergy") == std::string::npos)
     {
@@ -513,8 +513,6 @@ std::string State::get_named_owner(std::string sender) const
         if (pos != service_id_to_names.end())
             sender = pos->second;
     }
-
-    return sender;
 }
 
 /**
