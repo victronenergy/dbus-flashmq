@@ -1120,8 +1120,3 @@ void State::purge_old_usernames_to_clientids()
                 "purging_old_usernames_to_clientids done: %s users with a total of %s client IDs",
                  std::to_string(user_count).c_str(), std::to_string(client_id_count).c_str());
 }
-
-const std::weak_ptr<Client> &IsPrivilegedUser::get_client() const
-{
-    return this->client;
-}

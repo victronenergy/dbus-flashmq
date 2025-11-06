@@ -85,8 +85,6 @@ struct IsPrivilegedUser
     {
         return privileged;
     }
-
-    const std::weak_ptr<Client> &get_client() const;
 };
 
 struct State

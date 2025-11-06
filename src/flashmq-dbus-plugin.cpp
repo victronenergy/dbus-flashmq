@@ -550,7 +550,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             {
                 const IsPrivilegedUser priv = state->is_privileged_user(clientid, username);
 
-                if (!state->localhost_client(priv.get_client()))
+                if (!state->localhost_client(priv.client))
                 {
                     return AuthResult::acl_denied;
                 }
