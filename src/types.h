@@ -30,6 +30,8 @@ struct ValueMinMax
     VeVariant min;
     VeVariant max;
 
+    ValueMinMax() = default;
+    ValueMinMax (const ValueMinMax&) = default;
     ValueMinMax &operator=(const ValueMinMax &other);
 };
 
