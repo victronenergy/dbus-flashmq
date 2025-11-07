@@ -60,6 +60,7 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
 
     state->open();
     state->scan_all_dbus_services();
+    state->create_gui_plugin_watcher();
 
     // Indicate that the new keepalive mechanism is supported
     std::ostringstream keepalive_topic;

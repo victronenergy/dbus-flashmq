@@ -52,6 +52,7 @@ class Item
     Item(const std::string &path, const ValueMinMax &&value);
 public:
     Item();
+    Item(const std::string &vrm_id, const std::string &service, const ServiceIdentifier &instance, const std::string &path);
 
     static Item from_get_items(DBusMessageIter *iter);
     static Item from_get_value(DBusMessageIter *iter, const std::string &path_prefix);

@@ -71,6 +71,15 @@ Item::Item()
 }
 
 /**
+ * Constructor for manual items. Normally (when getting dbus signals), the mapping details aren't available right away.
+ */
+Item::Item(const std::string &vrm_id, const std::string &service, const ServiceIdentifier &instance, const std::string &path) :
+    path(prefix_path_with_slash(path))
+{
+    set_mapping_details(vrm_id, service, instance);
+}
+
+/**
  * @brief Item::from_get_items constructs an item as returned by the GetItems method on Victron dbus services.
  * @param iter pointing at the first dict entry in below example.
  * @return

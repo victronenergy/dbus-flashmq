@@ -178,6 +178,7 @@ struct State
     void register_user_and_clientid(const std::string &username, const std::string &clientid);
     void disconnect_all_connections_of_user(const std::string &username);
     void purge_old_usernames_to_clientids();
+    void create_gui_plugin_watcher();
 };
 
 }

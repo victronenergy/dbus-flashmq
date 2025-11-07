@@ -1120,3 +1120,13 @@ void State::purge_old_usernames_to_clientids()
                 "purging_old_usernames_to_clientids done: %s users with a total of %s client IDs",
                  std::to_string(user_count).c_str(), std::to_string(client_id_count).c_str());
 }
+
+void State::create_gui_plugin_watcher()
+{
+    Item i(this->unique_vrm_id, "pietje", 0, "/hallo");
+    ValueMinMax v;
+    v.value = "sdf";
+    i.set_value(v);
+    dbus_service_items["pietje"]["/Pietje"] = i;
+    i.publish();
+}
