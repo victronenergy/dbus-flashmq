@@ -16,6 +16,7 @@ class ServiceIdentifier
 public:
     ServiceIdentifier(int instance);
     ServiceIdentifier(const std::string &identifier);
+    ServiceIdentifier(const ServiceIdentifier&) = default;
     ServiceIdentifier();
     const std::string &getValue() const;
     ServiceIdentifier &operator=(const ServiceIdentifier &rhs);

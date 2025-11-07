@@ -10,11 +10,11 @@ namespace dbus_flashmq
 
 class ShortServiceName : public std::string
 {
-    static std::string get_value(const std::string &service, ServiceIdentifier instance);
+    static std::string get_value(const std::string &service, const ServiceIdentifier &instance);
     static std::string make_short(std::string service);
 public:
     std::string service_type;
-    ShortServiceName(const std::string &service, ServiceIdentifier instance);
+    ShortServiceName(const std::string &service, const ServiceIdentifier &instance);
     ShortServiceName();
 };
 
