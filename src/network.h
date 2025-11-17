@@ -43,13 +43,12 @@ sa_family_t getFamilyFromSockAddr(const sockaddr *addr);
  */
 class Network
 {
-    std::array<char, sizeof(struct sockaddr_storage)> data;
+    std::array<char, sizeof(struct sockaddr_storage)> data{};
     sa_family_t family = AF_UNSPEC;
 
     uint32_t in_mask = 0;
-
-    uint32_t in6_mask[4];
-    struct in6_addr network_addr_relevant_bits;
+    std::array<uint32_t, 4> in6_mask{};
+    struct in6_addr network_addr_relevant_bits{};
 
 public:
     Network(const std::string &network);
