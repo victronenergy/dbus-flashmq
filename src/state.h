@@ -15,6 +15,7 @@
 #include <set>
 #include "serviceidentifier.h"
 #include "network.h"
+#include "homeassistant_discovery.h"
 
 #include "vendor/flashmq_plugin.h"
 
@@ -136,6 +137,9 @@ struct State
 
     std::vector<Network> local_nets;
 
+    // Home Assistant Discovery
+    dbus_flashmq::HomeAssistantDiscovery ha_discovery;
+
     State();
     ~State();
     void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known, bool force_publish=false);
@@ -178,6 +182,7 @@ struct State
     void register_user_and_clientid(const std::string &username, const std::string &clientid);
     void disconnect_all_connections_of_user(const std::string &username);
     void purge_old_usernames_to_clientids();
+    void init_home_assistant_discovery();
 };
 
 }

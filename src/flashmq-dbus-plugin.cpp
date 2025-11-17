@@ -48,6 +48,7 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
         return;
 
     state->get_unique_id();
+    state->init_home_assistant_discovery();
 
     // Venus never skips it, but the Docker development env does.
     auto skip_broker_reg_pos = plugin_opts.find("skip_broker_registration");
@@ -80,6 +81,8 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
         return;
 
     State *state = static_cast<State*>(thread_data);
+
+    state->ha_discovery.clearAll();
 
     /*
      *  These are async calls and because we don't have an event loop anymore at this point, it may be that the
