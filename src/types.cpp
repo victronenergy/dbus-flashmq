@@ -334,7 +334,7 @@ void Item::publish(bool null_payload)
         return;
 
     // Blocked entries
-    if ((short_service_name.service_type == "vebus" && path.get() == "/Interfaces/Mk2/Tunnel") || (short_service_name.service_type == "paygo" && path.get() == "/LVD/Threshold"))
+    if ((short_service_name.service_type() == "vebus" && path.get() == "/Interfaces/Mk2/Tunnel") || (short_service_name.service_type() == "paygo" && path.get() == "/LVD/Threshold"))
         return;
 
     std::string payload;
@@ -393,22 +393,22 @@ const std::string &Item::get_service_name() const
  */
 bool Item::should_be_retained() const
 {
-    return short_service_name.service_type == "system" && path.get() == "/Serial";
+    return short_service_name.service_type() == "system" && path.get() == "/Serial";
 }
 
 bool Item::is_ap_password() const
 {
-    return short_service_name.service_type == "settings" && path.get() == "/Settings/Services/AccessPointPassword";
+    return short_service_name.service_type() == "settings" && path.get() == "/Settings/Services/AccessPointPassword";
 }
 
 bool Item::is_pincode() const
 {
-    return short_service_name.service_type == "settings" && path.get() == "/Settings/Ble/Service/Pincode";
+    return short_service_name.service_type() == "settings" && path.get() == "/Settings/Ble/Service/Pincode";
 }
 
 bool Item::is_vrm_portal_mode() const
 {
-    return short_service_name.service_type == "settings" && path.get() == "/Settings/Network/VrmPortal";
+    return short_service_name.service_type() == "settings" && path.get() == "/Settings/Network/VrmPortal";
 }
 
 

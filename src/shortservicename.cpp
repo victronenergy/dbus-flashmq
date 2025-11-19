@@ -1,45 +1,28 @@
 #include "shortservicename.h"
 
-#include <sstream>
-#include <vector>
+#include <algorithm>
 
 #include "exceptions.h"
-#include "utils.h"
 
 using namespace dbus_flashmq;
 
-std::string ShortServiceName::get_value(const std::string &service, const ServiceIdentifier &instance)
+std::string ShortServiceName::make_short(std::string const &service)
 {
-    std::string short_name = make_short(service);
-    std::ostringstream o;
-    o << short_name << '/' << instance.getValue();
-    return std::string(o.str());
-}
-
-std::string ShortServiceName::make_short(std::string service)
-{
-    if (service.starts_with("com.victronenergy."))
+    static constexpr std::string_view VICTRON_PREFIX{"com.victronenergy."};
+    if (service.starts_with(VICTRON_PREFIX))
     {
-        const std::vector<std::string> parts = splitToVector(service, '.');
-        service = parts.at(2);
+        // Skip "com.victronenergy."
+        const auto startPos = service.begin() + VICTRON_PREFIX.size();
+        // Find the next '.' after "com.victronenergy."
+        const auto dotPos = std::find(startPos, service.end(), '.');
+        // Return [startPos, dotPos>. It is ok for dotPos to be service.end()
+        return std::string(startPos, dotPos);
     }
-    else if (service.find(".") != std::string::npos || service.find("/") != std::string::npos)
+    else if (service.find_first_of("./") == std::string::npos)
     {
-        throw ValueError("String doesn't look like com.victronenergy.something or something without dots or slashes.");
+        // Does not contain . or /, so assume it's already short
+        return service;
     }
 
-    return service;
-}
-
-ShortServiceName::ShortServiceName(const std::string &service, const ServiceIdentifier &instance) :
-    std::string(get_value(service, instance)),
-    service_type(make_short(service)),
-    instance(instance.getValue())
-{
-
-}
-
-ShortServiceName::ShortServiceName() : std::string()
-{
-
+    throw ValueError("String doesn't look like com.victronenergy.something or something without dots or slashes.");
 }
