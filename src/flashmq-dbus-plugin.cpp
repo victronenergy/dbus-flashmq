@@ -615,6 +615,22 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                 return AuthResult::acl_denied;
             }
 
+            if (action == std::string_view("homeassistant") && !(clientid.empty() && username.empty()))
+            {
+                static bool logged = false;
+
+                if (!logged)
+                {
+                    logged = true;
+                    flashmq_logf(LOG_WARNING,
+                        "Received external publish topic: '%s'. "
+                        "This is unexpected and probably a misconfigured integration. Blocking this and later ones.",
+                        topic.c_str());
+                }
+
+                return AuthResult::acl_denied;
+            }
+
             // The rest is not auth as such, but take actions based on the messages.
             handle_venus_actions(state, action, system_id, username, topic, subtopics, payload);
         }
