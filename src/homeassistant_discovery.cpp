@@ -1519,7 +1519,7 @@ std::unique_ptr<HomeAssistantDiscovery::DeviceData> HomeAssistantDiscovery::crea
                                                                                              const ShortServiceName &short_service_name,
                                                                                              const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) const
 {
-    std::unique_ptr<DeviceData> device = device_factory_functions[short_service_name.service_type()]();
+    std::unique_ptr<DeviceData> device = device_factory_functions.at(short_service_name.service_type())();
 
     device->service = service;
     device->short_service_name = short_service_name;
