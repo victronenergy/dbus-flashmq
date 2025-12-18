@@ -11,6 +11,7 @@
 
 #include "state.h"
 #include "utils.h"
+#include "version.h"
 
 // https://dbus.freedesktop.org/doc/api/html/index.html
 
@@ -37,6 +38,7 @@ void flashmq_plugin_deallocate_thread_memory(void *thread_data, std::unordered_m
 
 void flashmq_plugin_main_init(std::unordered_map<std::string, std::string> &plugin_opts)
 {
+    flashmq_logf(LOG_NOTICE, "Starting dbus-flashmq version %s", std::to_string(version).c_str());
     dbus_threads_init_default();
 }
 

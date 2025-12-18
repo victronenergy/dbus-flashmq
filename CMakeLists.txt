@@ -46,6 +46,7 @@ add_library(flashmq-dbus-plugin SHARED
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
   src/network.h src/network.cpp
   src/homeassistant_discovery.h src/homeassistant_discovery.cpp
+  src/version.h
 )
 
 add_executable(flashmq-dbus-plugin-tests
@@ -78,6 +79,7 @@ add_executable(flashmq-dbus-plugin-tests
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
   src/network.h src/network.cpp
   src/homeassistant_discovery.h src/homeassistant_discovery.cpp
+  src/version.h
 )
 
 target_include_directories(flashmq-dbus-plugin PUBLIC ${DBUS_INCLUDE_DIRS} .)
