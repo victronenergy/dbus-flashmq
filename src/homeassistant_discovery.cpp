@@ -23,6 +23,29 @@ static constexpr std::string_view CHARGER_STATE_VALUE_TEMPLATE =
     ", 252: 'Bulk protect'"
     "} %}{{ states[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}";
 
+static constexpr std::string_view VICTRON_VERSION_VALUE_TEMPLATE =
+    "{% if value_json.value is none %}"
+    "Unknown"
+    "{% else %}"
+    "{% set ver = value_json.value | int(default=0) %}"
+    "{% if ver == 0 %}"
+    "Unknown"
+    "{% else %}"
+    "{% set major = (ver // 65536) % 65536 %}"
+    "{% set minor = (ver // 256) % 256 %}"
+    "{% set build = ver % 256 %}"
+    "{% if major == 0 %}"
+    "{% set major = minor %}"
+    "{% set minor = build %}"
+    "{% set build = 0 %}"
+    "{% endif %}"
+    "{% if build > 0 and build != 255 %}"
+    "{{ 'v%x.%02x.%02x' | format(major, minor, build) }}"
+    "{% else %}"
+    "{{ 'v%x.%02x' | format(major, minor) }}"
+    "{% endif %}"
+    "{% endif %}"
+    "{% endif %}";
 
 static constexpr std::string_view DEVICE_OFF_REASON_VALUE_TEMPLATE =
     "{% set value = value_json.value | int(0) %}"
@@ -163,21 +186,9 @@ void HomeAssistantDiscovery::DeviceData::addCommonDiagnostics(const std::unorder
     if (service_items.contains("/State"))
         addNumericDiagnostic("/State", "Device State", "mdi:power-settings");
     if (service_items.contains("/FirmwareVersion"))
-        addStringDiagnostic("/FirmwareVersion", "Firmware Version", "mdi:chip",
-                            "{% if value_json.value is none %}"
-                            "Unknown"
-                            "{% else %}"
-                            "{{ 'v%x' | format(value_json.value | int(default=0)) }}"
-                            "{% endif %}"
-                            );
+        addStringDiagnostic("/FirmwareVersion", "Firmware Version", "mdi:chip", VICTRON_VERSION_VALUE_TEMPLATE);
     if (service_items.contains("/HardwareVersion"))
-        addStringDiagnostic("/HardwareVersion", "Hardware Version", "mdi:memory",
-                            "{% if value_json.value is none %}"
-                            "Unknown"
-                            "{% else %}"
-                            "{{ 'v%x' | format(value_json.value | int(default=0)) }}"
-                            "{% endif %}"
-                            );
+        addStringDiagnostic("/HardwareVersion", "Hardware Version", "mdi:memory", VICTRON_VERSION_VALUE_TEMPLATE);
     if (service_items.contains("/DeviceOffReason"))
         addStringDiagnostic("/DeviceOffReason", "Off Reason", "mdi:information-outline", DEVICE_OFF_REASON_VALUE_TEMPLATE);
 }
