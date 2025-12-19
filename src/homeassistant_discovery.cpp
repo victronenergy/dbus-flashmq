@@ -550,7 +550,7 @@ bool HomeAssistantDiscovery::BatteryDevice::update(const std::unordered_map<std:
 {
     const auto &service_items = all_items.at(service);
     bool changed = DeviceData::update(all_items, changed_items);
-    if (changed_items.contains("/Settings/HasMidvoltage")) {
+    if (changed_items.contains("/Settings/HasMidVoltage")) {
         bool act_has_mid_voltage = calcHasMidVoltage(service_items);
         if (act_has_mid_voltage != has_mid_voltage) {
             has_mid_voltage = act_has_mid_voltage;
