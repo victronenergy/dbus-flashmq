@@ -28,7 +28,6 @@ void HomeAssistantDiscovery::SwitchDevice::addEntities(const std::unordered_map<
                 switch_state.command_topic = dbus_path;
                 switch_state.payload_on = "{\"value\": 1}";
                 switch_state.payload_off = "{\"value\": 0}";
-                switch_state.optimistic = false; // Wait for state feedback
                 switch_state.value_template = ON_OFF_VALUE_TEMPLATE;
                 switch_state.state_on = "ON";
                 switch_state.state_off = "OFF";
@@ -62,7 +61,6 @@ void HomeAssistantDiscovery::SwitchDevice::addEntities(const std::unordered_map<
                 dimming_state.max_value = 100;
                 dimming_state.unit_of_measurement = "%";
                 dimming_state.mode = "slider";
-                dimming_state.optimistic = false; // Wait for state feedback
                 auto result = entities.emplace(dbus_path, std::move(dimming_state));
                 if (result.second) {
                     // Successfully added, so store the path for custom name updates
