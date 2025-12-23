@@ -1,0 +1,85 @@
+#include "homeassistant_discovery.h"
+
+using namespace dbus_flashmq;
+
+void HomeAssistantDiscovery::TemperatureDevice::addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>>& all_items)
+{
+    const auto& service_items = all_items.at(service);
+
+    if (service_items.contains("/Temperature")) {
+        HAEntityConfig temp_sensor;
+        temp_sensor.name = "Temperature";
+        temp_sensor.state_class = "measurement";
+        temp_sensor.device_class = "temperature";
+        temp_sensor.unit_of_measurement = "°C";
+        temp_sensor.icon = "mdi:thermometer";
+        temp_sensor.suggested_display_precision = 1;
+        entities.emplace("/Temperature", std::move(temp_sensor));
+    }
+
+    if (service_items.contains("/Humidity")) {
+        HAEntityConfig humidity_sensor;
+        humidity_sensor.name = "Humidity";
+        humidity_sensor.state_class = "measurement";
+        humidity_sensor.device_class = "humidity";
+        humidity_sensor.unit_of_measurement = "%";
+        humidity_sensor.icon = "mdi:water-percent";
+        humidity_sensor.suggested_display_precision = 1;
+        entities.emplace("/Humidity", std::move(humidity_sensor));
+    }
+    if (service_items.contains("/Pressure")) {
+        HAEntityConfig pressure_sensor;
+        pressure_sensor.name = "Pressure";
+        pressure_sensor.state_class = "measurement";
+        pressure_sensor.device_class = "atmospheric_pressure";
+        pressure_sensor.unit_of_measurement = "hPa";
+        pressure_sensor.icon = "mdi:gauge";
+        pressure_sensor.suggested_display_precision = 1;
+        entities.emplace("/Pressure", std::move(pressure_sensor));
+    }
+    if (service_items.contains("/BatteryVoltage"))
+        addNumericDiagnostic("/BatteryVoltage", "Battery Voltage", "mdi:battery", 3, "voltage", "V");
+    addCommonDiagnostics(service_items);
+}
+
+std::pair<std::string, std::string> HomeAssistantDiscovery::TemperatureDevice::getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>>& all_items)
+{
+    const auto& items = all_items.at(service);
+    std::string name = getItemText(items, {"/CustomName"});
+    if (name.empty()) {
+        name = getItemText(items, {"/ProductName"});
+        if (name.empty()) {
+            // Determine sensor type based on available measurements
+            bool has_temp = items.find("/Temperature") != items.end();
+            bool has_humidity = items.find("/Humidity") != items.end();
+            bool has_pressure = items.find("/Pressure") != items.end();
+
+            if (has_temp && has_humidity && has_pressure) {
+                name = "Environmental Sensor";
+            } else if (has_temp && has_humidity) {
+                name = "Temperature & Humidity Sensor";
+            } else if (has_temp && has_pressure) {
+                name = "Temperature & Pressure Sensor";
+            } else if (has_humidity && has_pressure) {
+                name = "Humidity & Pressure Sensor";
+            } else if (has_humidity) {
+                name = "Humidity Sensor";
+            } else if (has_pressure) {
+                name = "Pressure Sensor";
+            } else {
+                name = "Temperature Sensor";
+            }
+        }
+
+        // No custom name so add the device instance
+        name.push_back(' ');
+        name.append(short_service_name.instance());
+    }
+
+    std::string model = getItemText(items, {"/ProductName"});
+    if (model.empty()) {
+        model = "Environmental Sensor";
+    }
+
+    return {name, model};
+}

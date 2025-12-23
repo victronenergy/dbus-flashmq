@@ -178,6 +178,10 @@ private:
         std::pair<std::string, std::string> getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
         void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
     };
+    static const std::string_view CHARGER_STATE_VALUE_TEMPLATE;
+    static const std::string_view VICTRON_VERSION_VALUE_TEMPLATE;
+    static const std::string_view DEVICE_OFF_REASON_VALUE_TEMPLATE;
+    static const std::string_view FLUID_TYPE_VALUE_TEMPLATE;
 
     std::string vrm_id;
     // std::unordered_set<std::string> enabled_services;
@@ -189,6 +193,11 @@ private:
     std::unique_ptr<HomeAssistantDiscovery::DeviceData> createDeviceData(const std::string &service,
                                                                          const ShortServiceName &short_service_name,
                                                                          const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) const;
+    static VeVariant getItemValue(const std::unordered_map<std::string, Item> &service_items, std::string_view dbus_path);
+    static std::string getItemText(const std::unordered_map<std::string, Item> &service_items,
+                                   std::initializer_list<std::string_view> dbus_paths);
+    static std::vector<std::string_view> splitPath(std::string_view dbus_path);
+    static std::string toIdentifier(std::string_view input);
 public:
     HomeAssistantDiscovery();
     ~HomeAssistantDiscovery() = default;
