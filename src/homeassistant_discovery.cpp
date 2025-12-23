@@ -248,24 +248,6 @@ nlohmann::json HAEntityConfig::toJson() const
     return config_json;
 }
 
-bool HomeAssistantDiscovery::DeviceData::update(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items,
-                                                const std::unordered_map<std::string, Item> &changed_items)
-{
-    bool changed = false;
-    if (std::any_of(changed_items.begin(), changed_items.end(), [this](const std::pair<std::string, Item> &elem)->bool { return name_paths.contains(elem.first); })) {
-        auto [name, model] = getNameAndModel(all_items);
-        if (ha_device.name != name) {
-            ha_device.name = name;
-            changed = true;
-        }
-        if (ha_device.model != model) {
-            ha_device.model = model;
-            changed = true;
-        }
-    }
-    return changed;
-}
-
 void HomeAssistantDiscovery::DeviceData::fillHADevice(const std::string &vrm_id,
                                                       const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items)
 {
@@ -288,6 +270,7 @@ void HomeAssistantDiscovery::DeviceData::fillHADevice(const std::string &vrm_id,
 void HomeAssistantDiscovery::DeviceData::fillHAEntities(const std::string &vrm_id,
                                                         const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items)
 {
+    entities.clear();
     addEntities(all_items);
     // Fill in the unique_ids, the state topics and the command topics
     for (auto & entity : entities) {
@@ -298,6 +281,52 @@ void HomeAssistantDiscovery::DeviceData::fillHAEntities(const std::string &vrm_i
         entity_config.state_topic = "N/" + vrm_id + "/" + short_service_name.total() + dbus_path;
         if (!entity_config.command_topic.empty())
             entity_config.command_topic = "W/" + vrm_id + "/" + short_service_name.total() + entity_config.command_topic;
+    }
+}
+
+void HomeAssistantDiscovery::DeviceData::processChangedItems(const std::string &vrm_id,
+                                                             const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items,
+                                                             const std::string& service,
+                                                             const std::unordered_map<std::string, Item> &changed_items)
+{
+    bool changed = false;
+    const auto &service_items = all_items.at(service);
+    if (item_count != service_items.size()) {
+        // The number of items for this service has changed. Just start over with a full discovery
+        flashmq_logf(LOG_DEBUG, "The number of items of device %s has changed", service.c_str());
+        item_count = service_items.size();
+        fillHAEntities(vrm_id, all_items);
+        changed = true;
+    } else {
+        // Check whether something has changed that enables or disables some entities
+        if (update(all_items, changed_items)) {
+            flashmq_logf(LOG_DEBUG, "Some entities for device %s have been enabled or disabled", service.c_str());
+            changed = true;
+        }
+        // Check whether the name is still the same
+        if (std::any_of(changed_items.begin(), changed_items.end(), [this](const std::pair<std::string, Item> &elem)->bool { return name_paths.contains(elem.first); })) {
+            auto [name, model] = getNameAndModel(all_items);
+            if (ha_device.name != name) {
+                flashmq_logf(LOG_DEBUG, "The name of device %s has changed", service.c_str());
+                ha_device.name = name;
+                changed = true;
+            }
+            if (ha_device.model != model) {
+                flashmq_logf(LOG_DEBUG, "The model of device %s has changed", service.c_str());
+                ha_device.model = model;
+                changed = true;
+            }
+        }
+    }
+    if (changed) {
+        nlohmann::json json = toJson();
+        std::string payload = json.dump();
+        if (cached_payload != payload) {
+            flashmq_publish_message(discovery_topic, 0, true, payload);
+            cached_payload = payload;
+        }
+    } else {
+        flashmq_logf(LOG_DEBUG, "No changes detected for device %s, skipping republish", service.c_str());
     }
 }
 
@@ -342,9 +371,11 @@ std::unique_ptr<HomeAssistantDiscovery::DeviceData> HomeAssistantDiscovery::crea
                                                                                              const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) const
 {
     std::unique_ptr<DeviceData> device = device_factory_functions.at(short_service_name.service_type())();
+    const auto &service_items = all_items.at(service);
 
     device->service = service;
     device->short_service_name = short_service_name;
+    device->item_count = service_items.size();
 
     device->fillHADevice(vrm_id, all_items);
     device->fillHAEntities(vrm_id, all_items);
@@ -373,16 +404,7 @@ void HomeAssistantDiscovery::publishSensorEntitiesWithItems(const std::string &s
     } else {
         flashmq_logf(LOG_DEBUG, "Updating existing device for service %s", service.c_str());
         DeviceData &device = *dev_it->second;
-        if (device.update(all_items, changed_items)) {
-            nlohmann::json json = device.toJson();
-            std::string payload = json.dump();
-            if (device.cached_payload != payload) {
-                flashmq_publish_message(device.discovery_topic, 0, true, payload);
-                device.cached_payload = payload; // Update cached payload
-            }
-        } else {
-            flashmq_logf(LOG_DEBUG, "No changes detected for device %s, skipping republish", service.c_str());
-        }
+        device.processChangedItems(vrm_id, all_items, service, changed_items);
     }
 }
 

@@ -78,6 +78,7 @@ private:
         std::string service;
         ShortServiceName short_service_name;
         HADevice ha_device;
+        size_t item_count = 0;
         std::unordered_map<std::string, HAEntityConfig> entities; // dbus_path -> entity config
         std::unordered_set<std::string> name_paths{"/CustomName"};
         std::string discovery_topic;
@@ -89,11 +90,15 @@ private:
                           const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items);
         void fillHAEntities(const std::string &vrm_id,
                             const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items);
+        void processChangedItems(const std::string &vrm_id,
+                                 const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items,
+                                 const std::string& service,
+                                 const std::unordered_map<std::string, Item> &changed_items);
 
         virtual std::pair<std::string, std::string> getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) = 0;
         virtual void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) = 0;
         virtual bool update(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items,
-                            const std::unordered_map<std::string, Item> &changed_items);
+                            const std::unordered_map<std::string, Item> &changed_items) { return false; };
 
         void addCommonDiagnostics(const std::unordered_map<std::string, Item> &service_items);
         void addNumericDiagnostic(std::string_view dbus_path,
