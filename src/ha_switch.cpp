@@ -116,7 +116,7 @@ std::pair<std::string, std::string> HomeAssistantDiscovery::SwitchDevice::getNam
 
     std::string model = getItemText(items, {"/ProductName"});
     if (model.empty()) {
-        model = "Energy Meter";
+        model = "Switch Device";
     }
 
     return {name, model};
