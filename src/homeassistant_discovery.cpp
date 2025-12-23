@@ -1,88 +1,9 @@
 #include "homeassistant_discovery.h"
 #include "vendor/flashmq_plugin.h"
-#include "utils.h"
 #include <algorithm>
 #include <ranges>
 
 using namespace dbus_flashmq;
-
-const std::string_view HomeAssistantDiscovery::CHARGER_STATE_VALUE_TEMPLATE =
-    "{% set states = "
-    "{ 0: 'Off'"
-    ", 1: 'Low Power'"
-    ", 2: 'Fault'"
-    ", 3: 'Bulk'"
-    ", 4: 'Absorption'"
-    ", 5: 'Float'"
-    ", 6: 'Storage'"
-    ", 7: 'Equalize'"
-    ", 8: 'Passthru'"
-    ", 9: 'Inverting'"
-    ", 10: 'Power assist'"
-    ", 11: 'Power supply'"
-    ", 252: 'Bulk protect'"
-    "} %}{{ states[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}";
-
-const std::string_view HomeAssistantDiscovery::VICTRON_VERSION_VALUE_TEMPLATE =
-    "{% if value_json.value is none %}"
-    "Unknown"
-    "{% else %}"
-    "{% set ver = value_json.value | int(default=0) %}"
-    "{% if ver == 0 %}"
-    "Unknown"
-    "{% else %}"
-    "{% set major = (ver // 65536) % 65536 %}"
-    "{% set minor = (ver // 256) % 256 %}"
-    "{% set build = ver % 256 %}"
-    "{% if major == 0 %}"
-    "{% set major = minor %}"
-    "{% set minor = build %}"
-    "{% set build = 0 %}"
-    "{% endif %}"
-    "{% if build > 0 and build != 255 %}"
-    "{{ 'v%x.%02x.%02x' | format(major, minor, build) }}"
-    "{% else %}"
-    "{{ 'v%x.%02x' | format(major, minor) }}"
-    "{% endif %}"
-    "{% endif %}"
-    "{% endif %}";
-
-const std::string_view HomeAssistantDiscovery::DEVICE_OFF_REASON_VALUE_TEMPLATE =
-    "{% set value = value_json.value | int(0) %}"
-    "{% set reasons = [] %}"
-    "{% if value | bitwise_and(1) %}""{% set reasons = reasons + [\"No/Low input power\"] %}""{% endif %}"
-    "{% if value | bitwise_and(2) %}""{% set reasons = reasons + [\"Disabled by physical switch\"] %}""{% endif %}"
-    "{% if value | bitwise_and(4) %}""{% set reasons = reasons + [\"Remote via Device-mode or push-button\"] %}""{% endif %}"
-    "{% if value | bitwise_and(8) %}""{% set reasons = reasons + [\"Remote input connector\"] %}""{% endif %}"
-    "{% if value | bitwise_and(16) %}""{% set reasons = reasons + [\"Internal condition preventing startup\"] %}""{% endif %}"
-    "{% if value | bitwise_and(32) %}""{% set reasons = reasons + [\"Need token for operation\"] %}""{% endif %}"
-    "{% if value | bitwise_and(64) %}""{% set reasons = reasons + [\"Signal from BMS\"] %}""{% endif %}"
-    "{% if value | bitwise_and(128) %}""{% set reasons = reasons + [\"Engine shutdown on low input voltage\"] %}""{% endif %}"
-    "{% if value | bitwise_and(256) %}""{% set reasons = reasons + [\"Converter is off to read input voltage accurately\"] %}""{% endif %}"
-    "{% if value | bitwise_and(512) %}""{% set reasons = reasons + [\"Low temperature\"] %}""{% endif %}"
-    "{% if value | bitwise_and(1024) %}""{% set reasons = reasons + [\"no/low panel power\"] %}""{% endif %}"
-    "{% if value | bitwise_and(2048) %}""{% set reasons = reasons + [\"no/low battery power\"] %}""{% endif %}"
-    "{% if value | bitwise_and(4096) %}""{% set reasons = reasons + [\"Unknown (4096)\"] %}""{% endif %}"
-    "{% if value | bitwise_and(8192) %}""{% set reasons = reasons + [\"Unknown (8192)\"] %}""{% endif %}"
-    "{% if value | bitwise_and(16384) %}""{% set reasons = reasons + [\"Unknown (16384)\"] %}""{% endif %}"
-    "{% if value | bitwise_and(32768) %}""{% set reasons = reasons + [\"Active alarm\"] %}""{% endif %}"
-    "{{ reasons | join(\", \") if reasons else \"-\" }}";
-
-const std::string_view HomeAssistantDiscovery::FLUID_TYPE_VALUE_TEMPLATE =
-    "{% set types = "
-    "{ 0: 'Fuel'"
-    ", 1: 'Fresh water'"
-    ", 2: 'Waste water'"
-    ", 3: 'Live well'"
-    ", 4: 'Oil'"
-    ", 5: 'Black water'"
-    ", 6: 'Gasoline'"
-    ", 7: 'Diesel'"
-    ", 8: 'LPG'"
-    ", 9: 'LNG'"
-    ", 10: 'Hydraulic oil'"
-    ", 11: 'Raw water'"
-    "} %}{{ types[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}";
 
 std::unordered_map<std::string_view, std::function<std::unique_ptr<HomeAssistantDiscovery::DeviceData>()>> HomeAssistantDiscovery::device_factory_functions = {
     {"temperature", []() { return std::make_unique<HomeAssistantDiscovery::TemperatureDevice>(); }},
@@ -220,7 +141,7 @@ nlohmann::json HAEntityConfig::toJson() const
         config_json["name"] = name;
         config_json["state_topic"] = state_topic;
         config_json["enabled_by_default"] = enabled_by_default;
-        if (!value_template.empty()) { config_json["value_template"] = value_template; }
+        config_json["value_template"] = value_template.empty() ? DEFAULT_VALUE_TEMPLATE : value_template;
         if (!state_on.empty()) { config_json["state_on"] = state_on; }
         if (!state_off.empty()) { config_json["state_off"] = state_off; }
         if (!unit_of_measurement.empty()) { config_json["unit_of_measurement"] = unit_of_measurement; }
@@ -238,8 +159,8 @@ nlohmann::json HAEntityConfig::toJson() const
 
             // For number entities (dimmers)
             if (min_value != 0 || max_value != 0) { config_json["min"] = min_value; config_json["max"] = max_value; }
-            if (!command_template.empty()) { config_json["command_template"] = command_template; }
             if (!mode.empty()) { config_json["mode"] = mode; }
+            config_json["command_template"] = command_template.empty() ? DEFAULT_COMMAND_TEMPLATE : command_template;
 
             config_json["optimistic"] = optimistic;
         }

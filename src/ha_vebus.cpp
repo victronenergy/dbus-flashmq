@@ -83,8 +83,7 @@ void HomeAssistantDiscovery::VeBusDevice::addEntities(const std::unordered_map<s
         entities.emplace("/State", std::move(state_sensor));
     }
     if (service_items.contains("/Mode"))
-        addStringDiagnostic("/Mode", "Mode", "mdi:cog",
-                            "{% set modes = {1: 'Charger Only', 2: 'Inverter Only', 3: 'On', 4: 'Off'} %}{{ modes[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}");
+        addStringDiagnostic("/Mode", "Mode", "mdi:cog", CHARGER_MODE_VALUE_TEMPLATE);
     if (service_items.contains("/VebusError"))
         addNumericDiagnostic("/VebusError", "VE.Bus Error", "mdi:alert-circle", 0);
     addCommonDiagnostics(service_items);

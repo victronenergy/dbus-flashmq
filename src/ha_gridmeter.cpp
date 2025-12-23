@@ -96,8 +96,7 @@ void HomeAssistantDiscovery::GridMeterDevice::addEntities(const std::unordered_m
         entities.emplace("/Ac/Power", std::move(total_power));
     }
     if (service_items.contains("/Position"))
-        addStringDiagnostic("/Position", "Position", "mdi:map-marker",
-                            "{% set positions = {0: 'AC input 1', 1: 'AC output', 2: 'AC input 2'} %}{{ positions[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}");
+        addStringDiagnostic("/Position", "Position", "mdi:map-marker", GRID_METER_POSITION_VALUE_TEMPLATE);
     addCommonDiagnostics(service_items);
 }
 

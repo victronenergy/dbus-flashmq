@@ -10,7 +10,7 @@ void HomeAssistantDiscovery::DigitalInputDevice::addEntities(const std::unordere
         HAEntityConfig input_state;
         input_state.name = "State";
         input_state.platform = "binary_sensor";
-        input_state.value_template = "{% if value_json.value == 1 %}ON{% else %}OFF{% endif %}";
+        input_state.value_template = ON_OFF_VALUE_TEMPLATE;
         entities.emplace("/InputState", std::move(input_state));
     }
     if (service_items.contains("/Count")) {

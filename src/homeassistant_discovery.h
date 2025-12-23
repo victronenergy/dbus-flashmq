@@ -37,6 +37,9 @@ struct HADevice
  */
 struct HAEntityConfig
 {
+    static const std::string_view DEFAULT_VALUE_TEMPLATE;
+    static const std::string_view DEFAULT_COMMAND_TEMPLATE;
+
     bool enabled = true;
     std::string unique_id;
     std::string platform = "sensor"; // sensor, switch, number, binary_sensor, etc.
@@ -50,12 +53,12 @@ struct HAEntityConfig
     std::string entity_category; // config, diagnostic
     bool enabled_by_default = true;
     int suggested_display_precision = -1;
-    std::string value_template = "{{ value_json.value }}";
+    std::string value_template;
     std::string state_on;
     std::string state_off;
 
     std::string command_topic;
-    std::string command_template = "";
+    std::string command_template;
     std::string payload_on;
     std::string payload_off;
     bool optimistic = false;
@@ -188,10 +191,16 @@ private:
         std::pair<std::string, std::string> getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
         void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
     };
+    static const std::string_view CHARGER_MODE_VALUE_TEMPLATE;
     static const std::string_view CHARGER_STATE_VALUE_TEMPLATE;
     static const std::string_view VICTRON_VERSION_VALUE_TEMPLATE;
     static const std::string_view DEVICE_OFF_REASON_VALUE_TEMPLATE;
     static const std::string_view FLUID_TYPE_VALUE_TEMPLATE;
+    static const std::string_view ON_OFF_VALUE_TEMPLATE;
+    static const std::string_view DEVICEFUNCTION_VALUE_TEMPLATE;
+    static const std::string_view GRID_METER_POSITION_VALUE_TEMPLATE;
+    static const std::string_view MPP_OPERATION_MODE_VALUE_TEMPLATE;
+    static const std::string_view SWITCH_STATE_VALUE_TEMPLATE;
 
     std::string vrm_id;
     // std::unordered_set<std::string> enabled_services;

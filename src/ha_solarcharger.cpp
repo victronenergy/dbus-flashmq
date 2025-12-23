@@ -79,11 +79,9 @@ void HomeAssistantDiscovery::SolarChargerDevice::addEntities(const std::unordere
         entities.emplace("/History/Daily/0/Yield", std::move(daily_yield));
     }
     if (service_items.contains("/MppOperationMode"))
-        addStringDiagnostic("/MppOperationMode", "MPP Operation Mode", "mdi:solar-panel",
-                            "{% set modes = {0: 'Off', 1: 'Voltage/current limited', 2: 'MPPT active', 255: 'Not available'} %}{{ modes[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}");
+        addStringDiagnostic("/MppOperationMode", "MPP Operation Mode", "mdi:solar-panel", MPP_OPERATION_MODE_VALUE_TEMPLATE);
     if (service_items.contains("/Load/State"))
-        addStringDiagnostic("/Load/State", "Load Output", "mdi:power-plug",
-                            "{% if value_json.value == 1 %}On{% else %}Off{% endif %}");
+        addStringDiagnostic("/Load/State", "Load Output", "mdi:power-plug", ON_OFF_VALUE_TEMPLATE);
     addCommonDiagnostics(service_items);
 }
 

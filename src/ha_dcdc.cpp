@@ -75,20 +75,9 @@ void HomeAssistantDiscovery::DcDcDevice::addEntities(const std::unordered_map<st
         entities.emplace("/State", std::move(state_sensor));
     }
     if (service_items.contains("/Mode"))
-        addStringDiagnostic("/Mode", "Mode", "mdi:cog",
-                            "{% set modes = {1: 'Charger Only', 2: 'Inverter Only', 3: 'On', 4: 'Off'} %}{{ modes[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}");
+        addStringDiagnostic("/Mode", "Mode", "mdi:cog", CHARGER_MODE_VALUE_TEMPLATE);
     if (service_items.contains("/Settings/DeviceFunction"))
-        addStringDiagnostic("/Settings/DeviceFunction", "Device function", "mdi:information",
-                            "{% if value_json.value is none %}"
-                            "Unknown"
-                            "{% elif value_json.value == 0 %}"
-                            "Charger"
-                            "{% elif value_json.value == 1 %}"
-                            "PSU"
-                            "{% else %}"
-                            "{{ value_json.value | string }}"
-                            "{% endif %}"
-                            );
+        addStringDiagnostic("/Settings/DeviceFunction", "Device function", "mdi:information", DEVICEFUNCTION_VALUE_TEMPLATE);
     addCommonDiagnostics(service_items);
 }
 

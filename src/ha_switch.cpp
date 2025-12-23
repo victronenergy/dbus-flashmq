@@ -29,7 +29,7 @@ void HomeAssistantDiscovery::SwitchDevice::addEntities(const std::unordered_map<
                 switch_state.payload_on = "{\"value\": 1}";
                 switch_state.payload_off = "{\"value\": 0}";
                 switch_state.optimistic = false; // Wait for state feedback
-                switch_state.value_template = "{% if value_json.value == 1 %}ON{% else %}OFF{% endif %}";
+                switch_state.value_template = ON_OFF_VALUE_TEMPLATE;
                 switch_state.state_on = "ON";
                 switch_state.state_off = "OFF";
 
@@ -58,7 +58,6 @@ void HomeAssistantDiscovery::SwitchDevice::addEntities(const std::unordered_map<
                 dimming_state.suggested_display_precision = 0;
 
                 dimming_state.command_topic = dbus_path;
-                dimming_state.command_template = "{\"value\": {{ value }} }";
                 dimming_state.min_value = 0;
                 dimming_state.max_value = 100;
                 dimming_state.unit_of_measurement = "%";
@@ -76,7 +75,7 @@ void HomeAssistantDiscovery::SwitchDevice::addEntities(const std::unordered_map<
     }
 
     if (service_items.contains("/State"))
-        addStringDiagnostic("/State", "Device State", "mdi:power-settings", "{% set states = {256: 'Connected', 257: 'Over temperature', 258: 'Temperature warning', 259: 'Channel fault', 260: 'Channel Tripped', 261: 'Under Voltage'} %}{{ states[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}");
+        addStringDiagnostic("/State", "Device State", "mdi:power-settings", SWITCH_STATE_VALUE_TEMPLATE);
     addCommonDiagnostics(service_items);
 }
 
