@@ -191,6 +191,19 @@ private:
         std::pair<std::string, std::string> getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
         void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
     };
+    struct AcSystemDevice : DeviceData {
+        static const int max_nr_of_phases = 3;
+        int nr_of_phases = 0;
+        static const int max_nr_of_ac_inputs = 3;
+        int nr_of_ac_inputs = 0;
+        void calcNrOfPhases(const std::unordered_map<std::string, Item> &service_items);
+        void calcNrOfAcInputs(const std::unordered_map<std::string, Item> &service_items);
+        std::pair<std::string, std::string> getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
+        void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
+        bool update(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items,
+                    const std::unordered_map<std::string, Item> &changed_items) override;
+    };
+
     static const std::string_view CHARGER_MODE_VALUE_TEMPLATE;
     static const std::string_view CHARGER_STATE_VALUE_TEMPLATE;
     static const std::string_view VICTRON_VERSION_VALUE_TEMPLATE;
@@ -201,6 +214,9 @@ private:
     static const std::string_view GRID_METER_POSITION_VALUE_TEMPLATE;
     static const std::string_view MPP_OPERATION_MODE_VALUE_TEMPLATE;
     static const std::string_view SWITCH_STATE_VALUE_TEMPLATE;
+    static const std::string_view AC_INPUT_TYPE_VALUE_TEMPLATE;
+    static const std::string_view YES_NO_VALUE_TEMPLATE;
+    static const std::string_view ESS_MODE_VALUE_TEMPLATE;
 
     std::string vrm_id;
     // std::unordered_set<std::string> enabled_services;

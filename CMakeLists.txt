@@ -47,6 +47,7 @@ add_library(flashmq-dbus-plugin SHARED
   src/network.h src/network.cpp
   src/homeassistant_discovery.h src/homeassistant_discovery.cpp
   src/ha_templates.cpp
+  src/ha_acsystem.cpp
   src/ha_battery.cpp
   src/ha_charger.cpp
   src/ha_dcdc.cpp
@@ -93,6 +94,7 @@ add_executable(flashmq-dbus-plugin-tests
   src/network.h src/network.cpp
   src/homeassistant_discovery.h src/homeassistant_discovery.cpp
   src/ha_templates.cpp
+  src/ha_acsystem.cpp
   src/ha_battery.cpp
   src/ha_charger.cpp
   src/ha_dcdc.cpp

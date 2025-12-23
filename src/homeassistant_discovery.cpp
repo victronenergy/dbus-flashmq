@@ -18,6 +18,7 @@ std::unordered_map<std::string_view, std::function<std::unique_ptr<HomeAssistant
     {"charger", []() { return std::make_unique<HomeAssistantDiscovery::ChargerDevice>(); }},
     {"dcdc", []() { return std::make_unique<HomeAssistantDiscovery::DcDcDevice>(); }},
     {"digitalinput", []() { return std::make_unique<HomeAssistantDiscovery::DigitalInputDevice>(); }},
+    {"acsystem", []() { return std::make_unique<HomeAssistantDiscovery::AcSystemDevice>(); }},
 };
 
 VeVariant HomeAssistantDiscovery::getItemValue(const std::unordered_map<std::string, Item> &service_items, std::string_view dbus_path)
