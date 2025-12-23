@@ -151,8 +151,13 @@ private:
         void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
     };
     struct GridMeterDevice : DeviceData {
+        static const int max_nr_of_phases = 3;
+        int nr_of_phases = 0;
+        void calcNrOfPhases(const std::unordered_map<std::string, Item> &service_items);
         std::pair<std::string, std::string> getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
         void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
+        bool update(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items,
+                    const std::unordered_map<std::string, Item> &changed_items) override;
     };
     struct SwitchDevice : DeviceData {
         struct CustomNameInfo {
