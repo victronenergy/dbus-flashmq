@@ -165,3 +165,29 @@ const std::string_view HomeAssistantDiscovery::ESS_MODE_VALUE_TEMPLATE =
     ", 2: 'Keep Batteries Charged'"
     ", 3: 'External Control'"
     "} %}{{ types[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}";
+
+const std::string_view HomeAssistantDiscovery::EVCHARGER_POSITION_VALUE_TEMPLATE =
+    "{% set types = "
+    "{ 0: 'AC Output'"
+    ", 1: 'AC Input'"
+    "} %}{{ types[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}";
+
+const std::string_view HomeAssistantDiscovery::EVCHARGER_STATE_VALUE_TEMPLATE =
+    "{% set states = "
+    "{ 0: 'Disconnected'"
+    ", 1: 'Connected'"
+    ", 2: 'Charging'"
+    ", 3: 'Charged'"
+    ", 4: 'Waiting for sun'"
+    ", 5: 'Waiting for RFID'"
+    ", 6: 'Waiting for start'"
+    ", 7: 'Low SOC'"
+    ", 8: 'Ground test error'"
+    ", 9: 'Welded contacts error'"
+    ", 10: 'CP input test error (shorted)'"
+    ", 11: 'Residual current detected'"
+    ", 12: 'Undervoltage detected'"
+    ", 13: 'Overvoltage detected'"
+    ", 14: 'Overheating detected'"
+    ", 20: 'Charging limit'"
+    "} %}{{ states[value_json.value] | default('Unknown (' + value_json.value|string + ')') }}";

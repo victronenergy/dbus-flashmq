@@ -203,6 +203,10 @@ private:
         bool update(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items,
                     const std::unordered_map<std::string, Item> &changed_items) override;
     };
+    struct EvChargerDevice : DeviceData {
+        std::pair<std::string, std::string> getNameAndModel(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
+        void addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>> &all_items) override;
+    };
 
     static const std::string_view CHARGER_MODE_VALUE_TEMPLATE;
     static const std::string_view CHARGER_STATE_VALUE_TEMPLATE;
@@ -217,6 +221,8 @@ private:
     static const std::string_view AC_INPUT_TYPE_VALUE_TEMPLATE;
     static const std::string_view YES_NO_VALUE_TEMPLATE;
     static const std::string_view ESS_MODE_VALUE_TEMPLATE;
+    static const std::string_view EVCHARGER_POSITION_VALUE_TEMPLATE;
+    static const std::string_view EVCHARGER_STATE_VALUE_TEMPLATE;
 
     std::string vrm_id;
     // std::unordered_set<std::string> enabled_services;

@@ -52,6 +52,7 @@ add_library(flashmq-dbus-plugin SHARED
   src/ha_charger.cpp
   src/ha_dcdc.cpp
   src/ha_digitalinput.cpp
+  src/ha_evcharger.cpp
   src/ha_gridmeter.cpp
   src/ha_meteo.cpp
   src/ha_solarcharger.cpp
@@ -99,6 +100,7 @@ add_executable(flashmq-dbus-plugin-tests
   src/ha_charger.cpp
   src/ha_dcdc.cpp
   src/ha_digitalinput.cpp
+  src/ha_evcharger.cpp
   src/ha_gridmeter.cpp
   src/ha_meteo.cpp
   src/ha_solarcharger.cpp
