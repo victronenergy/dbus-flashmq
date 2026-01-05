@@ -6,36 +6,37 @@ void HomeAssistantDiscovery::TemperatureDevice::addEntities(const std::unordered
 {
     const auto& service_items = all_items.at(service);
 
-    if (service_items.contains("/Temperature")) {
-        HAEntityConfig temp_sensor;
-        temp_sensor.name = "Temperature";
-        temp_sensor.state_class = "measurement";
-        temp_sensor.device_class = "temperature";
-        temp_sensor.unit_of_measurement = "°C";
-        temp_sensor.icon = "mdi:thermometer";
-        temp_sensor.suggested_display_precision = 1;
-        entities.emplace("/Temperature", std::move(temp_sensor));
+    if (std::string path = "/Temperature"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Temperature";
+        entity.state_class = "measurement";
+        entity.device_class = "temperature";
+        entity.unit_of_measurement = "°C";
+        entity.icon = "mdi:thermometer";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
 
-    if (service_items.contains("/Humidity")) {
-        HAEntityConfig humidity_sensor;
-        humidity_sensor.name = "Humidity";
-        humidity_sensor.state_class = "measurement";
-        humidity_sensor.device_class = "humidity";
-        humidity_sensor.unit_of_measurement = "%";
-        humidity_sensor.icon = "mdi:water-percent";
-        humidity_sensor.suggested_display_precision = 1;
-        entities.emplace("/Humidity", std::move(humidity_sensor));
+    if (std::string path = "/Humidity"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Humidity";
+        entity.state_class = "measurement";
+        entity.device_class = "humidity";
+        entity.unit_of_measurement = "%";
+        entity.icon = "mdi:water-percent";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Pressure")) {
-        HAEntityConfig pressure_sensor;
-        pressure_sensor.name = "Pressure";
-        pressure_sensor.state_class = "measurement";
-        pressure_sensor.device_class = "atmospheric_pressure";
-        pressure_sensor.unit_of_measurement = "hPa";
-        pressure_sensor.icon = "mdi:gauge";
-        pressure_sensor.suggested_display_precision = 1;
-        entities.emplace("/Pressure", std::move(pressure_sensor));
+
+    if (std::string path = "/Pressure"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Pressure";
+        entity.state_class = "measurement";
+        entity.device_class = "atmospheric_pressure";
+        entity.unit_of_measurement = "hPa";
+        entity.icon = "mdi:gauge";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
     if (service_items.contains("/BatteryVoltage"))
         addNumericDiagnostic("/BatteryVoltage", "Battery Voltage", "mdi:battery", 3, "voltage", "V");

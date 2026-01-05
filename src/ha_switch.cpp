@@ -18,28 +18,28 @@ void HomeAssistantDiscovery::SwitchDevice::addEntities(const std::unordered_map<
             std::string_view output_type = parts[1].substr(0, parts[1].find('_'));
 
             if (parts[2] == "State") {
-                HAEntityConfig switch_state;
                 std::string name_path = "/SwitchableOutput/" + std::string(parts[1]) + "/Name";
                 std::string custom_name_path = "/SwitchableOutput/" + std::string(parts[1]) + "/Settings/CustomName";
-                switch_state.name = getItemText(service_items, {custom_name_path, name_path});
-                switch_state.platform = "switch";
-                switch_state.state_class = "measurement";
-                switch_state.device_class = "switch";
-                switch_state.command_topic = dbus_path;
-                switch_state.payload_on = "{\"value\": 1}";
-                switch_state.payload_off = "{\"value\": 0}";
-                switch_state.value_template = ON_OFF_VALUE_TEMPLATE;
-                switch_state.state_on = "ON";
-                switch_state.state_off = "OFF";
+                HAEntityConfig entity;
+                entity.name = getItemText(service_items, {custom_name_path, name_path});
+                entity.platform = "switch";
+                entity.state_class = "measurement";
+                entity.device_class = "switch";
+                entity.command_topic = dbus_path;
+                entity.payload_on = "{\"value\": 1}";
+                entity.payload_off = "{\"value\": 0}";
+                entity.value_template = ON_OFF_VALUE_TEMPLATE;
+                entity.state_on = "ON";
+                entity.state_off = "OFF";
 
                 if (output_type == "output") {
-                    switch_state.icon = "mdi:electric-switch";
+                    entity.icon = "mdi:electric-switch";
                 } else if (output_type == "pwm") {
-                    switch_state.icon = "mdi:sine-wave";
+                    entity.icon = "mdi:sine-wave";
                 } else if (output_type == "relay") {
-                    switch_state.icon = "mdi:electric-switch";
+                    entity.icon = "mdi:electric-switch";
                 }
-                auto result = entities.emplace(dbus_path, std::move(switch_state));
+                auto result = entities.emplace(dbus_path, std::move(entity));
                 if (result.second) {
                     // Successfully added, so store the path for custom name updates
                     customname_paths[custom_name_path].custom_name_path = custom_name_path;
@@ -47,21 +47,21 @@ void HomeAssistantDiscovery::SwitchDevice::addEntities(const std::unordered_map<
                     customname_paths[custom_name_path].state_entity_config = &result.first->second;
                 }
             } else if (parts[2] == "Dimming" && output_type == "pwm") {
-                HAEntityConfig dimming_state;
                 std::string name_path = "/SwitchableOutput/" + std::string(parts[1]) + "/Name";
                 std::string custom_name_path = "/SwitchableOutput/" + std::string(parts[1]) + "/Settings/CustomName";
-                dimming_state.name = getItemText(service_items, {custom_name_path, name_path}) + " Dimming";
-                dimming_state.platform = "number";
-                dimming_state.state_class = "measurement";
-                dimming_state.icon = "mdi:brightness-percent";
-                dimming_state.suggested_display_precision = 0;
+                HAEntityConfig entity;
+                entity.name = getItemText(service_items, {custom_name_path, name_path}) + " Dimming";
+                entity.platform = "number";
+                entity.state_class = "measurement";
+                entity.icon = "mdi:brightness-percent";
+                entity.suggested_display_precision = 0;
 
-                dimming_state.command_topic = dbus_path;
-                dimming_state.min_value = 0;
-                dimming_state.max_value = 100;
-                dimming_state.unit_of_measurement = "%";
-                dimming_state.mode = "slider";
-                auto result = entities.emplace(dbus_path, std::move(dimming_state));
+                entity.command_topic = dbus_path;
+                entity.min_value = 0;
+                entity.max_value = 100;
+                entity.unit_of_measurement = "%";
+                entity.mode = "slider";
+                auto result = entities.emplace(dbus_path, std::move(entity));
                 if (result.second) {
                     // Successfully added, so store the path for custom name updates
                     customname_paths[custom_name_path].custom_name_path = custom_name_path;

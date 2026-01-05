@@ -6,93 +6,101 @@ void HomeAssistantDiscovery::ChargerDevice::addEntities(const std::unordered_map
 {
     const auto& service_items = all_items.at(service);
 
-    if (service_items.contains("/Dc/0/Voltage")) {
-        HAEntityConfig bat_voltage;
-        bat_voltage.name = "Battery Voltage";
-        bat_voltage.device_class = "voltage";
-        bat_voltage.state_class = "measurement";
-        bat_voltage.unit_of_measurement = "V";
-        bat_voltage.icon = "mdi:battery-charging";
-        bat_voltage.suggested_display_precision = 2;
-        entities.emplace("/Dc/0/Voltage", std::move(bat_voltage));
+    if (std::string path = "/Dc/0/Voltage"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Voltage";
+        entity.device_class = "voltage";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "V";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Dc/0/Current")) {
-        HAEntityConfig bat_current;
-        bat_current.name = "Battery Current";
-        bat_current.device_class = "current";
-        bat_current.state_class = "measurement";
-        bat_current.unit_of_measurement = "A";
-        bat_current.icon = "mdi:battery-charging";
-        bat_current.suggested_display_precision = 2;
-        entities.emplace("/Dc/0/Current", std::move(bat_current));
+
+    if (std::string path = "/Dc/0/Current"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Current";
+        entity.device_class = "current";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "A";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Dc/1/Voltage")) {
-        HAEntityConfig bat_voltage;
-        bat_voltage.name = "Battery Voltage (2)";
-        bat_voltage.device_class = "voltage";
-        bat_voltage.state_class = "measurement";
-        bat_voltage.unit_of_measurement = "V";
-        bat_voltage.icon = "mdi:battery-charging";
-        bat_voltage.suggested_display_precision = 2;
-        entities.emplace("/Dc/1/Voltage", std::move(bat_voltage));
+
+    if (std::string path = "/Dc/1/Voltage"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Voltage (2)";
+        entity.device_class = "voltage";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "V";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Dc/1/Current")) {
-        HAEntityConfig bat_current;
-        bat_current.name = "Battery Current (2)";
-        bat_current.device_class = "current";
-        bat_current.state_class = "measurement";
-        bat_current.unit_of_measurement = "A";
-        bat_current.icon = "mdi:battery-charging";
-        bat_current.suggested_display_precision = 2;
-        entities.emplace("/Dc/1/Current", std::move(bat_current));
+
+    if (std::string path = "/Dc/1/Current"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Current (2)";
+        entity.device_class = "current";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "A";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Dc/2/Voltage")) {
-        HAEntityConfig bat_voltage;
-        bat_voltage.name = "Battery Voltage (3)";
-        bat_voltage.device_class = "voltage";
-        bat_voltage.state_class = "measurement";
-        bat_voltage.unit_of_measurement = "V";
-        bat_voltage.icon = "mdi:battery-charging";
-        bat_voltage.suggested_display_precision = 2;
-        entities.emplace("/Dc/2/Voltage", std::move(bat_voltage));
+
+    if (std::string path = "/Dc/2/Voltage"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Voltage (3)";
+        entity.device_class = "voltage";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "V";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Dc/2/Current")) {
-        HAEntityConfig bat_current;
-        bat_current.name = "Battery Current (3)";
-        bat_current.device_class = "current";
-        bat_current.state_class = "measurement";
-        bat_current.unit_of_measurement = "A";
-        bat_current.icon = "mdi:battery-charging";
-        bat_current.suggested_display_precision = 2;
-        entities.emplace("/Dc/2/Current", std::move(bat_current));
+
+    if (std::string path = "/Dc/2/Current"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Current (3)";
+        entity.device_class = "current";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "A";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Ac/In/L1/P")) {
-        HAEntityConfig power_sensor;
-        power_sensor.name = "AC Power";
-        power_sensor.device_class = "power";
-        power_sensor.state_class = "measurement";
-        power_sensor.unit_of_measurement = "W";
-        power_sensor.icon = "mdi:transmission-tower";
-        power_sensor.suggested_display_precision = 1;
-        entities.emplace("/Ac/In/L1/P", std::move(power_sensor));
+
+    if (std::string path = "/Ac/In/L1/P"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "AC Power";
+        entity.device_class = "power";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "W";
+        entity.icon = "mdi:transmission-tower";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Ac/In/L1/I")) {
-        HAEntityConfig current_sensor;
-        current_sensor.name = "AC Current";
-        current_sensor.device_class = "current";
-        current_sensor.state_class = "measurement";
-        current_sensor.unit_of_measurement = "A";
-        current_sensor.icon = "mdi:current-ac";
-        current_sensor.suggested_display_precision = 2;
-        entities.emplace("/Ac/In/L1/I", std::move(current_sensor));
+
+    if (std::string path = "/Ac/In/L1/I"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "AC Current";
+        entity.device_class = "current";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "A";
+        entity.icon = "mdi:current-ac";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/State")) {
-        HAEntityConfig state_sensor;
-        state_sensor.name = "Charge State";
-        state_sensor.icon = "mdi:battery-charging";
+
+    if (std::string path = "/State"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Charge State";
+        entity.icon = "mdi:battery-charging";
         // Custom value template for state enum
-        state_sensor.value_template = CHARGER_STATE_VALUE_TEMPLATE;
-        entities.emplace("/State", std::move(state_sensor));
+        entity.value_template = CHARGER_STATE_VALUE_TEMPLATE;
+        entities.emplace(path, std::move(entity));
     }
     addCommonDiagnostics(service_items);
 }

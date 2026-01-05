@@ -6,33 +6,35 @@ void HomeAssistantDiscovery::TankDevice::addEntities(const std::unordered_map<st
 {
     const auto& service_items = all_items.at(service);
 
-    if (service_items.contains("/Level")) {
-        HAEntityConfig level_sensor;
-        level_sensor.name = "Tank Level";
-        level_sensor.state_class = "measurement";
-        level_sensor.unit_of_measurement = "%";
-        level_sensor.icon = "mdi:gauge";
-        level_sensor.suggested_display_precision = 1;
-        entities.emplace("/Level", std::move(level_sensor));
+    if (std::string path = "/Level"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Tank Level";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "%";
+        entity.icon = "mdi:gauge";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Capacity")) {
-        HAEntityConfig capacity_sensor;
-        capacity_sensor.name = "Tank Capacity";
-        capacity_sensor.state_class = "measurement";
-        capacity_sensor.unit_of_measurement = "L";
-        capacity_sensor.icon = "mdi:storage-tank";
-        capacity_sensor.suggested_display_precision = 0;
-        capacity_sensor.entity_category = "diagnostic";
-        entities.emplace("/Capacity", std::move(capacity_sensor));
+
+    if (std::string path = "/Capacity"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Tank Capacity";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "L";
+        entity.icon = "mdi:storage-tank";
+        entity.suggested_display_precision = 0;
+        entity.entity_category = "diagnostic";
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Remaining")) {
-        HAEntityConfig remaining_sensor;
-        remaining_sensor.name = "Tank Remaining Volume";
-        remaining_sensor.state_class = "measurement";
-        remaining_sensor.unit_of_measurement = "L";
-        remaining_sensor.icon = "mdi:gauge";
-        remaining_sensor.suggested_display_precision = 1;
-        entities.emplace("/Remaining", std::move(remaining_sensor));
+
+    if (std::string path = "/Remaining"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Tank Remaining Volume";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "L";
+        entity.icon = "mdi:gauge";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
     if (service_items.contains("/FluidType"))
         addStringDiagnostic("/FluidType", "Fluid Type", "mdi:waves", FLUID_TYPE_VALUE_TEMPLATE);

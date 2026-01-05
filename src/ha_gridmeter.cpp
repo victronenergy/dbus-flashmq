@@ -23,77 +23,83 @@ void HomeAssistantDiscovery::GridMeterDevice::addEntities(const std::unordered_m
     calcNrOfPhases(service_items);
 
     // Always loop over all possible phases. The enabled properties will be set according to the actual number of phases.
+    // This way we know in the update function that the entities exist and only need to enable/disable them.
     for (int phase = 1; phase <= max_nr_of_phases; ++phase) {
-        {
-            std::string power_path = "/Ac/L" + std::to_string(phase) + "/Power";
-            HAEntityConfig power_sensor;
-            power_sensor.name = "L" + std::to_string(phase) + " Power";
-            power_sensor.device_class = "power";
-            power_sensor.state_class = "measurement";
-            power_sensor.unit_of_measurement = "W";
-            power_sensor.icon = "mdi:transmission-tower";
-            power_sensor.suggested_display_precision = 1;
-            power_sensor.enabled = phase <= nr_of_phases && service_items.contains(power_path);
-            entities.emplace(power_path, std::move(power_sensor));
+        { // Power - /Ac/Lx/Power
+            std::string path = "/Ac/L" + std::to_string(phase) + "/Power";
+            HAEntityConfig entity;
+            entity.name = "L" + std::to_string(phase) + " Power";
+            entity.device_class = "power";
+            entity.state_class = "measurement";
+            entity.unit_of_measurement = "W";
+            entity.icon = "mdi:transmission-tower";
+            entity.suggested_display_precision = 1;
+            entity.enabled = phase <= nr_of_phases && service_items.contains(path);
+            entities.emplace(path, std::move(entity));
         }
-        {
-            std::string voltage_path = "/Ac/L" + std::to_string(phase) + "/Voltage";
-            HAEntityConfig voltage_sensor;
-            voltage_sensor.name = "L" + std::to_string(phase) + " Voltage";
-            voltage_sensor.device_class = "voltage";
-            voltage_sensor.state_class = "measurement";
-            voltage_sensor.unit_of_measurement = "V";
-            voltage_sensor.icon = "mdi:flash";
-            voltage_sensor.suggested_display_precision = 1;
-            voltage_sensor.enabled = phase <= nr_of_phases && service_items.contains(voltage_path);
-            entities.emplace(voltage_path, std::move(voltage_sensor));
+
+        { // Voltage - /Ac/Lx/Voltage
+            std::string path = "/Ac/L" + std::to_string(phase) + "/Voltage";
+            HAEntityConfig entity;
+            entity.name = "L" + std::to_string(phase) + " Voltage";
+            entity.device_class = "voltage";
+            entity.state_class = "measurement";
+            entity.unit_of_measurement = "V";
+            entity.icon = "mdi:flash";
+            entity.suggested_display_precision = 1;
+            entity.enabled = phase <= nr_of_phases && service_items.contains(path);
+            entities.emplace(path, std::move(entity));
         }
-        {
-            std::string current_path = "/Ac/L" + std::to_string(phase) + "/Current";
-            HAEntityConfig current_sensor;
-            current_sensor.name = "L" + std::to_string(phase) + " Current";
-            current_sensor.device_class = "current";
-            current_sensor.state_class = "measurement";
-            current_sensor.unit_of_measurement = "A";
-            current_sensor.icon = "mdi:current-ac";
-            current_sensor.suggested_display_precision = 2;
-            current_sensor.enabled = phase <= nr_of_phases && service_items.contains(current_path);
-            entities.emplace(current_path, std::move(current_sensor));
+
+        { // Current - /Ac/Lx/Current
+            std::string path = "/Ac/L" + std::to_string(phase) + "/Current";
+            HAEntityConfig entity;
+            entity.name = "L" + std::to_string(phase) + " Current";
+            entity.device_class = "current";
+            entity.state_class = "measurement";
+            entity.unit_of_measurement = "A";
+            entity.icon = "mdi:current-ac";
+            entity.suggested_display_precision = 2;
+            entity.enabled = phase <= nr_of_phases && service_items.contains(path);
+            entities.emplace(path, std::move(entity));
         }
-        {
-            std::string energy_forward_path = "/Ac/L" + std::to_string(phase) + "/Energy/Forward";
-            HAEntityConfig energy_forward_sensor;
-            energy_forward_sensor.name = "L" + std::to_string(phase) + " Energy Import";
-            energy_forward_sensor.device_class = "energy";
-            energy_forward_sensor.state_class = "total_increasing";
-            energy_forward_sensor.unit_of_measurement = "kWh";
-            energy_forward_sensor.icon = "mdi:counter";
-            energy_forward_sensor.suggested_display_precision = 2;
-            energy_forward_sensor.enabled = phase <= nr_of_phases && service_items.contains(energy_forward_path);
-            entities.emplace(energy_forward_path, std::move(energy_forward_sensor));
+
+        { // Energy Import - /Ac/Lx/Energy/Forward
+            std::string path = "/Ac/L" + std::to_string(phase) + "/Energy/Forward";
+            HAEntityConfig entity;
+            entity.name = "L" + std::to_string(phase) + " Energy Import";
+            entity.device_class = "energy";
+            entity.state_class = "total_increasing";
+            entity.unit_of_measurement = "kWh";
+            entity.icon = "mdi:counter";
+            entity.suggested_display_precision = 2;
+            entity.enabled = phase <= nr_of_phases && service_items.contains(path);
+            entities.emplace(path, std::move(entity));
         }
-        {
-            std::string energy_reverse_path = "/Ac/L" + std::to_string(phase) + "/Energy/Reverse";
-            HAEntityConfig energy_reverse_sensor;
-            energy_reverse_sensor.name = "L" + std::to_string(phase) + " Energy Export";
-            energy_reverse_sensor.device_class = "energy";
-            energy_reverse_sensor.state_class = "total_increasing";
-            energy_reverse_sensor.unit_of_measurement = "kWh";
-            energy_reverse_sensor.icon = "mdi:counter";
-            energy_reverse_sensor.suggested_display_precision = 2;
-            energy_reverse_sensor.enabled = phase <= nr_of_phases && service_items.contains(energy_reverse_path);
-            entities.emplace(energy_reverse_path, std::move(energy_reverse_sensor));
+
+        { // Energy Export - /Ac/Lx/Energy/Reverse
+            std::string path = "/Ac/L" + std::to_string(phase) + "/Energy/Reverse";
+            HAEntityConfig entity;
+            entity.name = "L" + std::to_string(phase) + " Energy Export";
+            entity.device_class = "energy";
+            entity.state_class = "total_increasing";
+            entity.unit_of_measurement = "kWh";
+            entity.icon = "mdi:counter";
+            entity.suggested_display_precision = 2;
+            entity.enabled = phase <= nr_of_phases && service_items.contains(path);
+            entities.emplace(path, std::move(entity));
         }
     }
-    if (service_items.contains("/Ac/Power")) {
-        HAEntityConfig total_power;
-        total_power.name = "Total Power";
-        total_power.device_class = "power";
-        total_power.state_class = "measurement";
-        total_power.unit_of_measurement = "W";
-        total_power.icon = "mdi:transmission-tower";
-        total_power.suggested_display_precision = 1;
-        entities.emplace("/Ac/Power", std::move(total_power));
+
+    if (std::string path = "/Ac/Power"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Total Power";
+        entity.device_class = "power";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "W";
+        entity.icon = "mdi:transmission-tower";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
     if (service_items.contains("/Position"))
         addStringDiagnostic("/Position", "Position", "mdi:map-marker", GRID_METER_POSITION_VALUE_TEMPLATE);

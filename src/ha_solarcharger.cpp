@@ -6,77 +6,79 @@ void HomeAssistantDiscovery::SolarChargerDevice::addEntities(const std::unordere
 {
     const auto& service_items = all_items.at(service);
 
-    if (service_items.contains("/Pv/V")) {
-        HAEntityConfig pv_voltage;
-        pv_voltage.name = "PV Voltage";
-        pv_voltage.device_class = "voltage";
-        pv_voltage.state_class = "measurement";
-        pv_voltage.unit_of_measurement = "V";
-        pv_voltage.icon = "mdi:solar-panel";
-        pv_voltage.suggested_display_precision = 2;
-        entities.emplace("/Pv/V", std::move(pv_voltage));
+    if (std::string path = "/Pv/V"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "PV Voltage";
+        entity.device_class = "voltage";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "V";
+        entity.icon = "mdi:solar-panel";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
 
-    if (service_items.contains("/Pv/I")) {
-        HAEntityConfig pv_current;
-        pv_current.name = "PV Current";
-        pv_current.device_class = "current";
-        pv_current.state_class = "measurement";
-        pv_current.unit_of_measurement = "A";
-        pv_current.icon = "mdi:solar-panel";
-        pv_current.suggested_display_precision = 2;
-        entities.emplace("/Pv/I", std::move(pv_current));
+    if (std::string path = "/Pv/I"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "PV Current";
+        entity.device_class = "current";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "A";
+        entity.icon = "mdi:solar-panel";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
 
-    if (service_items.contains("/Yield/Power")) {
-        HAEntityConfig pv_power;
-        pv_power.name = "PV Power";
-        pv_power.device_class = "power";
-        pv_power.state_class = "measurement";
-        pv_power.unit_of_measurement = "W";
-        pv_power.icon = "mdi:solar-panel";
-        pv_power.suggested_display_precision = 1;
-        entities.emplace("/Yield/Power", std::move(pv_power));
+    if (std::string path = "/Yield/Power"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "PV Power";
+        entity.device_class = "power";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "W";
+        entity.icon = "mdi:solar-panel";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
 
-    if (service_items.contains("/Dc/0/Voltage")) {
-        HAEntityConfig bat_voltage;
-        bat_voltage.name = "Battery Voltage";
-        bat_voltage.device_class = "voltage";
-        bat_voltage.state_class = "measurement";
-        bat_voltage.unit_of_measurement = "V";
-        bat_voltage.icon = "mdi:battery-charging";
-        bat_voltage.suggested_display_precision = 2;
-        entities.emplace("/Dc/0/Voltage", std::move(bat_voltage));
+    if (std::string path = "/Dc/0/Voltage"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Voltage";
+        entity.device_class = "voltage";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "V";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
 
-    if (service_items.contains("/Dc/0/Current")) {
-        HAEntityConfig bat_current;
-        bat_current.name = "Battery Current";
-        bat_current.device_class = "current";
-        bat_current.state_class = "measurement";
-        bat_current.unit_of_measurement = "A";
-        bat_current.icon = "mdi:battery-charging";
-        bat_current.suggested_display_precision = 2;
-        entities.emplace("/Dc/0/Current", std::move(bat_current));
+    if (std::string path = "/Dc/0/Current"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Current";
+        entity.device_class = "current";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "A";
+        entity.icon = "mdi:battery-charging";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/State")) {
-        HAEntityConfig state_sensor;
-        state_sensor.name = "Charge State";
-        state_sensor.icon = "mdi:battery-charging";
+
+    if (std::string path = "/State"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Charge State";
+        entity.icon = "mdi:battery-charging";
         // Custom value template for state enum
-        state_sensor.value_template = CHARGER_STATE_VALUE_TEMPLATE;
-        entities.emplace("/State", std::move(state_sensor));
+        entity.value_template = CHARGER_STATE_VALUE_TEMPLATE;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/History/Daily/0/Yield")) {
-        HAEntityConfig daily_yield;
-        daily_yield.name = "Daily Yield";
-        daily_yield.device_class = "energy";
-        daily_yield.state_class = "total_increasing";
-        daily_yield.unit_of_measurement = "kWh";
-        daily_yield.icon = "mdi:solar-panel";
-        daily_yield.suggested_display_precision = 2;
-        entities.emplace("/History/Daily/0/Yield", std::move(daily_yield));
+
+    if (std::string path = "/History/Daily/0/Yield"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Daily Yield";
+        entity.device_class = "energy";
+        entity.state_class = "total_increasing";
+        entity.unit_of_measurement = "kWh";
+        entity.icon = "mdi:solar-panel";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
     if (service_items.contains("/MppOperationMode"))
         addStringDiagnostic("/MppOperationMode", "MPP Operation Mode", "mdi:solar-panel", MPP_OPERATION_MODE_VALUE_TEMPLATE);

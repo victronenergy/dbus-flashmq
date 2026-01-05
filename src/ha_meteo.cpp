@@ -5,45 +5,49 @@ using namespace dbus_flashmq;
 void HomeAssistantDiscovery::MeteoDevice::addEntities(const std::unordered_map<std::string, std::unordered_map<std::string, Item>>& all_items)
 {
     const auto& service_items = all_items.at(service);
-    if (service_items.contains("/CellTemperature")) {
-        HAEntityConfig cell_temp_sensor;
-        cell_temp_sensor.name = "Cell temperature";
-        cell_temp_sensor.state_class = "measurement";
-        cell_temp_sensor.device_class = "temperature";
-        cell_temp_sensor.unit_of_measurement = "°C";
-        cell_temp_sensor.icon = "mdi:thermometer";
-        cell_temp_sensor.suggested_display_precision = 1;
-        entities.emplace("/CellTemperature", std::move(cell_temp_sensor));
+
+    if (std::string path = "/CellTemperature"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Cell temperature";
+        entity.state_class = "measurement";
+        entity.device_class = "temperature";
+        entity.unit_of_measurement = "°C";
+        entity.icon = "mdi:thermometer";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Irradiance")) {
-        HAEntityConfig irradiance_sensor;
-        irradiance_sensor.name = "Solar irradiance";
-        irradiance_sensor.state_class = "measurement";
-        irradiance_sensor.device_class = "irradiance";
-        irradiance_sensor.unit_of_measurement = "W/m²";
-        irradiance_sensor.icon = "mdi:solar-power";
-        irradiance_sensor.suggested_display_precision = 1;
-        entities.emplace("/Irradiance", std::move(irradiance_sensor));
+
+    if (std::string path = "/Irradiance"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Solar irradiance";
+        entity.state_class = "measurement";
+        entity.device_class = "irradiance";
+        entity.unit_of_measurement = "W/m²";
+        entity.icon = "mdi:solar-power";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/TodaysYield")) {
-        HAEntityConfig todays_yield_sensor;
-        todays_yield_sensor.name = "Today's Yield";
-        todays_yield_sensor.state_class = "total_increasing";
-        todays_yield_sensor.device_class = "energy";
-        todays_yield_sensor.unit_of_measurement = "kWh";
-        todays_yield_sensor.icon = "mdi:solar-panel";
-        todays_yield_sensor.suggested_display_precision = 2;
-        entities.emplace("/TodaysYield", std::move(todays_yield_sensor));
+
+    if (std::string path = "/TodaysYield"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Today's Yield";
+        entity.state_class = "total_increasing";
+        entity.device_class = "energy";
+        entity.unit_of_measurement = "kWh";
+        entity.icon = "mdi:solar-panel";
+        entity.suggested_display_precision = 2;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/TimeSinceLastSun")) {
-        HAEntityConfig time_since_sun_sensor;
-        time_since_sun_sensor.name = "Time Since Last Sun";
-        time_since_sun_sensor.state_class = "measurement";
-        time_since_sun_sensor.device_class = "duration";
-        time_since_sun_sensor.unit_of_measurement = "s";
-        time_since_sun_sensor.icon = "mdi:clock";
-        time_since_sun_sensor.entity_category = "diagnostic";
-        entities.emplace("/TimeSinceLastSun", std::move(time_since_sun_sensor));
+
+    if (std::string path = "/TimeSinceLastSun"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Time Since Last Sun";
+        entity.state_class = "measurement";
+        entity.device_class = "duration";
+        entity.unit_of_measurement = "s";
+        entity.icon = "mdi:clock";
+        entity.entity_category = "diagnostic";
+        entities.emplace(path, std::move(entity));
     }
     if (service_items.contains("/BatteryVoltage"))
         addNumericDiagnostic("/BatteryVoltage", "Battery Voltage", "mdi:battery", 3, "voltage", "V");

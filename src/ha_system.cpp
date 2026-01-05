@@ -7,47 +7,51 @@ void HomeAssistantDiscovery::SystemDevice::addEntities(const std::unordered_map<
     const auto& service_items = all_items.at(service);
 
     for (int phase = 1; phase <= 3; ++phase) {
+        // AC Load Lx - /Ac/Consumption/Lx/Power
         std::string path = "/Ac/Consumption/L" + std::to_string(phase) + "/Power";
         if (service_items.contains(path)) {
-            HAEntityConfig ac_loads;
-            ac_loads.name = "AC Load L" + std::to_string(phase);
-            ac_loads.device_class = "power";
-            ac_loads.state_class = "measurement";
-            ac_loads.unit_of_measurement = "W";
-            ac_loads.icon = "mdi:home-lightning-bolt";
-            ac_loads.suggested_display_precision = 1;
-            entities.emplace(path, std::move(ac_loads));
+            HAEntityConfig entity;
+            entity.name = "AC Load L" + std::to_string(phase);
+            entity.device_class = "power";
+            entity.state_class = "measurement";
+            entity.unit_of_measurement = "W";
+            entity.icon = "mdi:home-lightning-bolt";
+            entity.suggested_display_precision = 1;
+            entities.emplace(path, std::move(entity));
         }
     }
-    if (service_items.contains("/Ac/Consumption/Total/Power")) {
-        HAEntityConfig total_consumption;
-        total_consumption.name = "Total AC Consumption";
-        total_consumption.device_class = "power";
-        total_consumption.state_class = "measurement";
-        total_consumption.unit_of_measurement = "W";
-        total_consumption.icon = "mdi:home-lightning-bolt";
-        total_consumption.suggested_display_precision = 1;
-        entities.emplace("/Ac/Consumption/Total/Power", std::move(total_consumption));
+
+    if (std::string path = "/Ac/Consumption/Total/Power"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Total AC Consumption";
+        entity.device_class = "power";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "W";
+        entity.icon = "mdi:home-lightning-bolt";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Dc/Battery/Power")) {
-        HAEntityConfig bat_power;
-        bat_power.name = "Battery Power";
-        bat_power.device_class = "power";
-        bat_power.state_class = "measurement";
-        bat_power.unit_of_measurement = "W";
-        bat_power.icon = "mdi:battery";
-        bat_power.suggested_display_precision = 1;
-        entities.emplace("/Dc/Battery/Power", std::move(bat_power));
+
+    if (std::string path = "/Dc/Battery/Power"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "Battery Power";
+        entity.device_class = "power";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "W";
+        entity.icon = "mdi:battery";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
-    if (service_items.contains("/Dc/Pv/Power")) {
-        HAEntityConfig pv_power;
-        pv_power.name = "PV Power";
-        pv_power.device_class = "power";
-        pv_power.state_class = "measurement";
-        pv_power.unit_of_measurement = "W";
-        pv_power.icon = "mdi:solar-panel";
-        pv_power.suggested_display_precision = 1;
-        entities.emplace("/Dc/Pv/Power", std::move(pv_power));
+
+    if (std::string path = "/Dc/Pv/Power"; service_items.contains(path)) {
+        HAEntityConfig entity;
+        entity.name = "PV Power";
+        entity.device_class = "power";
+        entity.state_class = "measurement";
+        entity.unit_of_measurement = "W";
+        entity.icon = "mdi:solar-panel";
+        entity.suggested_display_precision = 1;
+        entities.emplace(path, std::move(entity));
     }
     if (service_items.contains("/SystemState/State"))
         addNumericDiagnostic("/SystemState/State", "System State", "mdi:state-machine", 0);
