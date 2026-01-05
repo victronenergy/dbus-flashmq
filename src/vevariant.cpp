@@ -232,7 +232,8 @@ VeVariant::VeVariant(const nlohmann::json &j)
     }
     else if (j.is_object())
     {
-
+        const std::string type_name(j.type_name());
+        throw ValueError("VeVariant: unsupported JSON value type: " + type_name);
     }
     else if (j.is_null())
     {
@@ -243,7 +244,7 @@ VeVariant::VeVariant(const nlohmann::json &j)
     else
     {
         const std::string type_name(j.type_name());
-        throw ValueError("Unsupported JSON value type: " + type_name);
+        throw ValueError("VeVariant: unsupported JSON value type: " + type_name);
     }
 }
 
@@ -533,7 +534,7 @@ std::string VeVariant::get_dbus_type_as_string_flat() const
     case VeVariantType::Dict:
         return DBUS_TYPE_ARRAY_AS_STRING; // TODO: array with dict types. Hmm. How?
     default:
-        return DBUS_TYPE_INVALID_AS_STRING;
+        throw std::runtime_error("Can't get dbus string notation of unknown VeVariant type.");
     }
 }
 
