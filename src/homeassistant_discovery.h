@@ -51,7 +51,6 @@ struct HAEntityConfig
     std::string unit_of_measurement;
     std::string icon;
     std::string entity_category; // config, diagnostic
-    bool enabled_by_default = true;
     int suggested_display_precision = -1;
     std::string value_template;
     std::string state_on;
@@ -61,7 +60,6 @@ struct HAEntityConfig
     std::string command_template;
     std::string payload_on;
     std::string payload_off;
-    bool optimistic = false;
     int min_value = 0;
     int max_value = 0;
     std::string mode;

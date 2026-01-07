@@ -142,7 +142,6 @@ nlohmann::json HAEntityConfig::toJson() const
         config_json["unique_id"] = unique_id;
         config_json["name"] = name;
         config_json["state_topic"] = state_topic;
-        config_json["enabled_by_default"] = enabled_by_default;
         config_json["value_template"] = value_template.empty() ? DEFAULT_VALUE_TEMPLATE : value_template;
         if (!state_on.empty()) { config_json["state_on"] = state_on; }
         if (!state_off.empty()) { config_json["state_off"] = state_off; }
@@ -163,8 +162,6 @@ nlohmann::json HAEntityConfig::toJson() const
             if (min_value != 0 || max_value != 0) { config_json["min"] = min_value; config_json["max"] = max_value; }
             if (!mode.empty()) { config_json["mode"] = mode; }
             config_json["command_template"] = command_template.empty() ? DEFAULT_COMMAND_TEMPLATE : command_template;
-
-            config_json["optimistic"] = optimistic;
         }
     }
 
