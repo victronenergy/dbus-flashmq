@@ -274,6 +274,19 @@ void State::open()
 dbus_uint32_t State::call_method(const std::string &service, const std::string &path, const std::string &interface, const std::string &method,
                                  const std::vector<VeVariant> &args, bool wrap_arguments_in_variant)
 {
+    // DOSsing the dbus can cripple a system, so we need to protect against it.
+    if (this->dbus_method_call_tokens <= 0 || (block_dbus_method_until.has_value() && block_dbus_method_until.value() > std::chrono::steady_clock::now() ))
+    {
+        if (!block_dbus_method_until)
+            block_dbus_method_until = std::chrono::steady_clock::now() + DBUS_METHODS_CALLS_BLOCK_DURATION;
+
+        const auto left = std::chrono::duration_cast<std::chrono::seconds>(block_dbus_method_until.value() - std::chrono::steady_clock::now());
+        throw std::runtime_error("Exceeded dbus method call rate. Blocking for " + std::to_string(left.count()) + " more seconds");
+    }
+
+    block_dbus_method_until.reset();
+    this->dbus_method_call_tokens--;
+
     if (!dbus_validate_path(path.c_str(), nullptr))
     {
         throw std::runtime_error("Path '" + path + "' is not valid for method call.");
@@ -635,6 +648,7 @@ void State::per_second_action()
 
     this->keepAliveTokens = KEEPALIVE_TOKENS;
     this->loginTokensShortTerm = std::min<int>(LOGIN_TOKENS_SHORT_TERM, this->loginTokensShortTerm + 1);
+    this->dbus_method_call_tokens = std::min<int>(DBUS_METHOD_CALL_TOKENS, this->dbus_method_call_tokens + DBUS_METHODS_PER_SECOND);
 
     if (this->longTermLoginTokensResetAt + std::chrono::hours(24) < std::chrono::steady_clock::now())
     {

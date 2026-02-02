@@ -26,6 +26,10 @@
 #define LOGIN_TOKENS_SHORT_TERM 20
 #define LOGIN_TOKENS_LONG_TERM 150
 
+constexpr int DBUS_METHOD_CALL_TOKENS = 1000;
+constexpr int DBUS_METHODS_PER_SECOND = 50;
+constexpr std::chrono::seconds DBUS_METHODS_CALLS_BLOCK_DURATION{30};
+
 namespace dbus_flashmq
 {
 
@@ -134,6 +138,9 @@ struct State
     int loginTokensShortTerm = LOGIN_TOKENS_SHORT_TERM;
     int loginTokensLongTerm = LOGIN_TOKENS_LONG_TERM;
     std::chrono::time_point<std::chrono::steady_clock> longTermLoginTokensResetAt;
+
+    int dbus_method_call_tokens = DBUS_METHOD_CALL_TOKENS;
+    std::optional<std::chrono::time_point<std::chrono::steady_clock>> block_dbus_method_until;
 
     std::vector<Network> local_nets;
 
