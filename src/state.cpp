@@ -281,7 +281,8 @@ dbus_uint32_t State::call_method(const std::string &service, const std::string &
             block_dbus_method_until = std::chrono::steady_clock::now() + DBUS_METHODS_CALLS_BLOCK_DURATION;
 
         const auto left = std::chrono::duration_cast<std::chrono::seconds>(block_dbus_method_until.value() - std::chrono::steady_clock::now());
-        throw std::runtime_error("Exceeded dbus method call rate. Blocking for " + std::to_string(left.count()) + " more seconds");
+        const std::string full_path(service + ", " + path + ", " + method);
+        throw std::runtime_error("Exceeded dbus method call rate for '" + full_path + "'. Blocking for " + std::to_string(left.count()) + " more seconds");
     }
 
     block_dbus_method_until.reset();
