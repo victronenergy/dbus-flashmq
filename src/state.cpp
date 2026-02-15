@@ -1142,3 +1142,20 @@ void State::init_home_assistant_discovery()
     ha_discovery.setVrmId(unique_vrm_id);
     flashmq_logf(LOG_INFO, "Home Assistant Discovery initialized with VRM ID: %s", unique_vrm_id.c_str());
 }
+
+bool State::check_rate_limit(const std::string &clientid)
+{
+    auto now = std::chrono::steady_clock::now();
+    auto &bucket = client_method_call_buckets[clientid];
+
+    // Initialize bucket if new
+    if (bucket.max_tokens == 0)
+    {
+        bucket.max_tokens = 60.0;
+        bucket.fill_rate = 1.0;
+        bucket.tokens = bucket.max_tokens;
+        bucket.last_update = now;
+    }
+
+    return bucket.consume(1.0);
+}

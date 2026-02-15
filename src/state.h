@@ -88,6 +88,37 @@ struct IsPrivilegedUser
     }
 };
 
+struct TokenBucket
+{
+    double tokens;
+    double max_tokens;
+    double fill_rate; // tokens per second
+    std::chrono::time_point<std::chrono::steady_clock> last_update;
+
+    TokenBucket() : tokens(0), max_tokens(0), fill_rate(0) {}
+
+    TokenBucket(double max_tokens, double fill_rate) : tokens(max_tokens), max_tokens(max_tokens), fill_rate(fill_rate)
+    {
+        last_update = std::chrono::steady_clock::now();
+    }
+
+    bool consume(double count)
+    {
+        auto now = std::chrono::steady_clock::now();
+        std::chrono::duration<double> diff = now - last_update;
+        tokens += diff.count() * fill_rate;
+        if (tokens > max_tokens) tokens = max_tokens;
+        last_update = now;
+
+        if (tokens >= count)
+        {
+            tokens -= count;
+            return true;
+        }
+        return false;
+    }
+};
+
 struct State
 {
     uint32_t register_pending_id = 0;
@@ -134,6 +165,8 @@ struct State
     int loginTokensShortTerm = LOGIN_TOKENS_SHORT_TERM;
     int loginTokensLongTerm = LOGIN_TOKENS_LONG_TERM;
     std::chrono::time_point<std::chrono::steady_clock> longTermLoginTokensResetAt;
+
+    std::unordered_map<std::string, TokenBucket> client_method_call_buckets;
 
     std::vector<Network> local_nets;
 
@@ -183,6 +216,7 @@ struct State
     void disconnect_all_connections_of_user(const std::string &username);
     void purge_old_usernames_to_clientids();
     void init_home_assistant_discovery();
+    bool check_rate_limit(const std::string &clientid);
 };
 
 }

@@ -306,6 +306,15 @@ AuthResult flashmq_plugin_login_check(
     return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
 }
 
+void flashmq_plugin_client_disconnected(void *thread_data, const std::string &clientid)
+{
+    if (!thread_data)
+        return;
+
+    State *state = static_cast<State*>(thread_data);
+    state->client_method_call_buckets.erase(clientid);
+}
+
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
                                   std::string_view payload, uint8_t &qos, bool &retain, const std::optional<std::string> &correlationData,
                                   const std::optional<std::string> &responseTopic, std::vector<std::pair<std::string, std::string>> *userProperties)
@@ -337,7 +346,7 @@ bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid
 }
 
 void handle_venus_actions(
-    State *state, const std::string &action, const std::string &system_id, const std::string &username,
+    State *state, const std::string &clientid, const std::string &action, const std::string &system_id, const std::string &username,
     const std::string &topic, const std::vector<std::string> &subtopics, std::string_view payload)
 {
     // Wo only work on strings like R/<portalid>/system/0/Serial.
@@ -349,6 +358,14 @@ void handle_venus_actions(
          */
         if (username_is_bridge(username))
             state->vrmBridgeInterestTime = std::chrono::steady_clock::now();
+
+        if (!state->check_rate_limit(clientid))
+        {
+            flashmq_logf(LOG_WARNING,
+                         "Client '%s' exceeded dbus method call rate limit. Dropping message for topic '%s'.",
+                         clientid.c_str(), topic.c_str());
+            return;
+        }
 
         // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
         if (action == "W")
@@ -634,7 +651,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             }
 
             // The rest is not auth as such, but take actions based on the messages.
-            handle_venus_actions(state, action, system_id, username, topic, subtopics, payload);
+            handle_venus_actions(state, clientid, action, system_id, username, topic, subtopics, payload);
         }
         else if (access == AclAccess::read)
         {
