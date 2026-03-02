@@ -115,15 +115,6 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, std::unordered_
         add_dbus_to_mqtt_mapping(service, device_instance, item, force_publish);
     }
 
-    try
-    {
-        ha_discovery.publishSensorEntitiesWithItems(service, s, dbus_service_items, items);
-    }
-    catch (std::exception &ex)
-    {
-        flashmq_logf(LOG_ERR, "Error updating home assistant entities: %s", ex.what());
-    }
-
     attempt_to_process_delayed_changes();
 }
 
@@ -382,7 +373,6 @@ ServiceIdentifier State::store_and_get_instance_from_service(const std::string &
  *
  *  { "keepalive-options" : [ "suppress-republish" ] }
  *  { "keepalive-options" : [ {"full-publish-completed-echo": "B9FMlGWoCcfMKc" } ] }
- *  { "keepalive-options" : [ "ha-config-publish" ] }
  *
  * The payload was previsouly used for selecting only certain topics. We are probably not going to support that functionality. But
  * Note that that format was an array of topics, not a dict with keys. That kind of limited supporting other things with it. That's why
@@ -421,10 +411,6 @@ void State::handle_keepalive(const std::string &payload)
                         if (el.is_object())
                         {
                             payload_echo = el["full-publish-completed-echo"];
-                        }
-                        if (el.is_string() && el.get<std::string>() == "ha-config-publish")
-                        {
-                            ha_discovery.publishAllConfigs();
                         }
                     }
                 }
@@ -886,9 +872,6 @@ void State::scan_dbus_service(const std::string &service)
 
 void State::remove_dbus_service(const std::string &service)
 {
-    // Handle HA Discovery cleanup before removing the service data
-    ha_discovery.removeAllSensorsForService(service);
-
     {
         auto pos = dbus_service_items.find(service);
         if (pos != dbus_service_items.end())
@@ -1007,6 +990,7 @@ bool BridgeConnectionState::operator==(const BridgeConnectionState &other) const
 {
     return msg == other.msg && connected == other.connected;
 }
+
 
 void State::clear_expired_privileged_clients()
 {
@@ -1135,27 +1119,4 @@ void State::purge_old_usernames_to_clientids()
     flashmq_logf(LOG_DEBUG,
                 "purging_old_usernames_to_clientids done: %s users with a total of %s client IDs",
                  std::to_string(user_count).c_str(), std::to_string(client_id_count).c_str());
-}
-
-void State::init_home_assistant_discovery()
-{
-    ha_discovery.setVrmId(unique_vrm_id);
-    flashmq_logf(LOG_INFO, "Home Assistant Discovery initialized with VRM ID: %s", unique_vrm_id.c_str());
-}
-
-bool State::check_rate_limit(const std::string &clientid)
-{
-    auto now = std::chrono::steady_clock::now();
-    auto &bucket = client_method_call_buckets[clientid];
-
-    // Initialize bucket if new
-    if (bucket.max_tokens == 0)
-    {
-        bucket.max_tokens = 60.0;
-        bucket.fill_rate = 1.0;
-        bucket.tokens = bucket.max_tokens;
-        bucket.last_update = now;
-    }
-
-    return bucket.consume(1.0);
 }

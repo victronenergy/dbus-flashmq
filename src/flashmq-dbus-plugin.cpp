@@ -50,7 +50,6 @@ void flashmq_plugin_init(void *thread_data, std::unordered_map<std::string, std:
         return;
 
     state->get_unique_id();
-    state->init_home_assistant_discovery();
 
     // Venus never skips it, but the Docker development env does.
     auto skip_broker_reg_pos = plugin_opts.find("skip_broker_registration");
@@ -83,8 +82,6 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
         return;
 
     State *state = static_cast<State*>(thread_data);
-
-    state->ha_discovery.clearAll();
 
     /*
      *  These are async calls and because we don't have an event loop anymore at this point, it may be that the
@@ -627,22 +624,6 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
                     state->warningAboutNTopicsLogged = true;
                     flashmq_logf(LOG_WARNING,
                         "Received external publish on N topic: '%s'. "
-                        "This is unexpected and probably a misconfigured integration. Blocking this and later ones.",
-                        topic.c_str());
-                }
-
-                return AuthResult::acl_denied;
-            }
-
-            if (action == std::string_view("homeassistant") && !(clientid.empty() && username.empty()))
-            {
-                static bool logged = false;
-
-                if (!logged)
-                {
-                    logged = true;
-                    flashmq_logf(LOG_WARNING,
-                        "Received external publish topic: '%s'. "
                         "This is unexpected and probably a misconfigured integration. Blocking this and later ones.",
                         topic.c_str());
                 }

@@ -45,22 +45,6 @@ add_library(flashmq-dbus-plugin SHARED
   src/serviceidentifier.h src/serviceidentifier.cpp
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
   src/network.h src/network.cpp
-  src/homeassistant_discovery.h src/homeassistant_discovery.cpp
-  src/ha_templates.cpp
-  src/ha_acsystem.cpp
-  src/ha_battery.cpp
-  src/ha_charger.cpp
-  src/ha_dcdc.cpp
-  src/ha_digitalinput.cpp
-  src/ha_evcharger.cpp
-  src/ha_gridmeter.cpp
-  src/ha_meteo.cpp
-  src/ha_solarcharger.cpp
-  src/ha_switch.cpp
-  src/ha_system.cpp
-  src/ha_tank.cpp
-  src/ha_temperature.cpp
-  src/ha_vebus.cpp
   src/version.h
 )
 
@@ -93,22 +77,6 @@ add_executable(flashmq-dbus-plugin-tests
   src/serviceidentifier.h src/serviceidentifier.cpp
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
   src/network.h src/network.cpp
-  src/homeassistant_discovery.h src/homeassistant_discovery.cpp
-  src/ha_templates.cpp
-  src/ha_acsystem.cpp
-  src/ha_battery.cpp
-  src/ha_charger.cpp
-  src/ha_dcdc.cpp
-  src/ha_digitalinput.cpp
-  src/ha_evcharger.cpp
-  src/ha_gridmeter.cpp
-  src/ha_meteo.cpp
-  src/ha_solarcharger.cpp
-  src/ha_switch.cpp
-  src/ha_system.cpp
-  src/ha_tank.cpp
-  src/ha_temperature.cpp
-  src/ha_vebus.cpp
   src/version.h
 )
 
