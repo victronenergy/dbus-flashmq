@@ -88,6 +88,13 @@ struct IsPrivilegedUser
     }
 };
 
+struct ClientData
+{
+    const std::string username;
+    const std::string clientid;
+    const std::weak_ptr<Client> client;
+};
+
 struct State
 {
     uint32_t register_pending_id = 0;
@@ -98,6 +105,8 @@ struct State
     bool do_online_registration = true;
 
     std::set<std::weak_ptr<Client>, std::owner_less<std::weak_ptr<Client>>> privileged_network_clients;
+    std::unordered_map<std::string, ClientData> security_profile_password_clients;
+    std::unordered_map<std::string, ClientData> lan_clients;
 
     static std::atomic_int instance_counter;
     std::string unique_vrm_id;
@@ -177,11 +186,13 @@ struct State
     void write_all_bridge_connection_states_debounced();
     void decrement_login_tokens();
     void clear_expired_privileged_clients();
+    void disconnect_all_applicable_lan_clients(const MqttLocalMode m);
     bool localhost_client(const std::weak_ptr<Client> &client) const;
     IsPrivilegedUser is_privileged_user(const std::string &clientid, const std::string &username) const;
     void register_user_and_clientid(const std::string &username, const std::string &clientid);
     void disconnect_all_connections_of_user(const std::string &username);
     void purge_old_usernames_to_clientids();
+
 };
 
 }

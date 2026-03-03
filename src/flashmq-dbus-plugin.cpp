@@ -101,10 +101,12 @@ void flashmq_plugin_deinit(void *thread_data, std::unordered_map<std::string, st
 
 AuthResult auth_success_or_delayed_fail(
         State *state, const std::weak_ptr<Client> &client,
-        const std::string &username, const std::string &clientid, AuthResult result)
+        const std::string &username, const std::string &clientid, AuthResult result, bool lan)
 {
     if (result == AuthResult::success)
     {
+        if (lan)
+            state->lan_clients.try_emplace(clientid, ClientData{username, clientid, client});
         state->register_user_and_clientid(username, clientid);
         return AuthResult::success;
     }
@@ -253,7 +255,7 @@ AuthResult flashmq_plugin_login_check(
     {
         // We assume elsewhere that this user is localhost, so we must force it.
         AuthResult r = localhost_login ? AuthResult::success : AuthResult::login_denied;
-        return auth_success_or_delayed_fail(state, client, username, clientid, r);
+        return auth_success_or_delayed_fail(state, client, username, clientid, r, false);
     }
 
     if (localhost_login)
@@ -261,14 +263,14 @@ AuthResult flashmq_plugin_login_check(
         // Localhost is / can be a connection that is authenticated by Nginx, meaning GUIv2.
         state->privileged_network_clients.insert(client);
 
-        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::success);
+        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::success, false);
     }
 
     // Tokens are not subject to rate-limiting. We control their entropy, and rate-limiting is not necessary.
     const std::optional<AuthResult> token_auth_result = do_token_auth(username, password);
     if (token_auth_result)
     {
-        return auth_success_or_delayed_fail(state, client, username, clientid, token_auth_result.value());
+        return auth_success_or_delayed_fail(state, client, username, clientid, token_auth_result.value(), true);
     }
 
     /*
@@ -280,28 +282,29 @@ AuthResult flashmq_plugin_login_check(
      */
     if (username.rfind("token/", 0) == 0)
     {
-        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
+        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied, true);
     }
 
     // When MQTT LAN is 'tokens only', port 8883 is open. It's now up to us to enforce tokens-only.
     if (state->mqtt_local_mode != MqttLocalMode::On)
     {
         flashmq_logf(LOG_WARNING, "LAN MQTT is not set to 'on'. Rejecting non-token login");
-        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
+        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied, true);
     }
 
     if (state->loginTokensShortTerm <= 0 || state->loginTokensLongTerm <= 0)
     {
         flashmq_logf(LOG_WARNING, "Login rate-limited: short-term-left=%d long-term-left=%d", state->loginTokensShortTerm, state->loginTokensLongTerm);
-        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
+        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied, true);
     }
 
     if (do_vnc_auth(password) == AuthResult::success)
     {
         // The VNC password is the security profile password, so it's privileged.
         state->privileged_network_clients.insert(client);
+        state->security_profile_password_clients.try_emplace(clientid, ClientData{username, clientid, client});
 
-        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::success);
+        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::success, true);
     }
 
     /*
@@ -316,7 +319,17 @@ AuthResult flashmq_plugin_login_check(
             state->passwordHistory.insert(password);
     }
 
-    return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
+    return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied, true);
+}
+
+void flashmq_plugin_client_disconnected(void *thread_data, const std::string &clientid)
+{
+    if (!thread_data)
+        return;
+
+    State *state = static_cast<State*>(thread_data);
+    state->security_profile_password_clients.erase(clientid);
+    state->lan_clients.erase(clientid);
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,

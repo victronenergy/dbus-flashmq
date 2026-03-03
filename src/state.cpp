@@ -139,6 +139,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifi
     if (fully_mapped_item.is_mqtt_local())
     {
         this->mqtt_local_mode = parseMqttLocal(fully_mapped_item.get_value().value.as_int<int>());
+        this->disconnect_all_applicable_lan_clients(this->mqtt_local_mode);
     }
 
     if (this->alive || fully_mapped_item.should_be_retained() || force_publish)
@@ -1013,6 +1014,35 @@ void State::clear_expired_privileged_clients()
 
         if (cur->expired())
             this->privileged_network_clients.erase(cur);
+    }
+}
+
+void State::disconnect_all_applicable_lan_clients(const MqttLocalMode m)
+{
+    if (m == MqttLocalMode::TokensOnly)
+    {
+        for (const auto &x : this->security_profile_password_clients)
+        {
+            flashmq_logf(LOG_WARNING, "LAN MQTT set to TOKENS_ONLY. Removing non-token client '%s / %s'", x.second.clientid.c_str(), x.second.username.c_str());
+            std::weak_ptr<Session> ses;
+            flashmq_get_session_pointer(x.second.clientid, x.second.username, ses);
+            flashmq_plugin_remove_client_v4(ses, false, ServerDisconnectReasons::NotAuthorized);
+        }
+
+        this->security_profile_password_clients.clear();
+    }
+
+    if (m == MqttLocalMode::Off)
+    {
+        for (const auto &x : this->lan_clients)
+        {
+            flashmq_logf(LOG_WARNING, "LAN MQTT set to OFF. Removing client '%s / %s'", x.second.clientid.c_str(), x.second.username.c_str());
+            std::weak_ptr<Session> ses;
+            flashmq_get_session_pointer(x.second.clientid, x.second.username, ses);
+            flashmq_plugin_remove_client_v4(ses, false, ServerDisconnectReasons::NotAuthorized);
+        }
+
+        this->lan_clients.clear();
     }
 }
 
