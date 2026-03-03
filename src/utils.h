@@ -141,6 +141,7 @@ std::string_view make_string_view(const T &input, const size_t offset, const siz
 }
 
 std::string base64_encode(const std::string_view input);
+MqttLocalMode parseMqttLocal(int val);
 
 }
 

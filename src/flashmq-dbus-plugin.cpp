@@ -283,6 +283,13 @@ AuthResult flashmq_plugin_login_check(
         return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
     }
 
+    // When MQTT LAN is 'tokens only', port 8883 is open. It's now up to us to enforce tokens-only.
+    if (state->mqtt_local_mode != MqttLocalMode::On)
+    {
+        flashmq_logf(LOG_WARNING, "LAN MQTT is not set to 'on'. Rejecting non-token login");
+        return auth_success_or_delayed_fail(state, client, username, clientid, AuthResult::login_denied);
+    }
+
     if (state->loginTokensShortTerm <= 0 || state->loginTokensLongTerm <= 0)
     {
         flashmq_logf(LOG_WARNING, "Login rate-limited: short-term-left=%d long-term-left=%d", state->loginTokensShortTerm, state->loginTokensLongTerm);

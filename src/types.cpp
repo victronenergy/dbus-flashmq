@@ -411,6 +411,12 @@ bool Item::is_vrm_portal_mode() const
     return short_service_name.service_type() == "settings" && path.get() == "/Settings/Network/VrmPortal";
 }
 
+bool Item::is_mqtt_local() const
+{
+    return short_service_name.service_type() == "settings" && path.get() == "/Settings/Services/MqttLocal";
+}
+
+
 
 
 

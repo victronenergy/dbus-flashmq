@@ -270,6 +270,21 @@ VrmPortalMode dbus_flashmq::parseVrmPortalMode(int val)
     }
 }
 
+MqttLocalMode dbus_flashmq::parseMqttLocal(int val)
+{
+    switch(val)
+    {
+    case(0):
+        return MqttLocalMode::Off;
+    case(1):
+        return MqttLocalMode::On;
+    case(2):
+        return MqttLocalMode::TokensOnly;
+    default:
+        return MqttLocalMode::Unknown;
+    }
+}
+
 std::string &dbus_flashmq::str_make_lower(std::string &s)
 {
     for (auto &c : s)

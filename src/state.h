@@ -103,6 +103,7 @@ struct State
     std::string unique_vrm_id;
 
     VrmPortalMode vrm_portal_mode = VrmPortalMode::Unknown;
+    MqttLocalMode mqtt_local_mode = MqttLocalMode::Unknown;
 
     /*
      * TODO: Maybe implement the selective keep-alive mechanism like dbus-mqtt had.

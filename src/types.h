@@ -24,6 +24,14 @@ enum class VrmPortalMode
     Full
 };
 
+enum class MqttLocalMode
+{
+    Unknown = -1,
+    Off = 0,
+    On = 1,
+    TokensOnly = 2
+};
+
 struct ValueMinMax
 {
     VeVariant value;
@@ -69,6 +77,7 @@ public:
     bool is_ap_password() const;
     bool is_pincode() const;
     bool is_vrm_portal_mode() const;
+    bool is_mqtt_local() const;
 };
 
 }

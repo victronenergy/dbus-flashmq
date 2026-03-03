@@ -136,6 +136,11 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifi
         this->write_all_bridge_connection_states_debounced();
     }
 
+    if (fully_mapped_item.is_mqtt_local())
+    {
+        this->mqtt_local_mode = parseMqttLocal(fully_mapped_item.get_value().value.as_int<int>());
+    }
+
     if (this->alive || fully_mapped_item.should_be_retained() || force_publish)
         fully_mapped_item.publish();
 }
