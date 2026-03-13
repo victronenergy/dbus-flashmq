@@ -211,37 +211,6 @@ std::string dbus_flashmq::get_stdout_from_process(const std::string &process, pi
     return result;
 }
 
-int16_t dbus_flashmq::s_to_int16(const std::string &s)
-{
-    int32_t x = std::stol(s);
-
-    if (x > 32767 || x < -32768)
-        throw ValueError("Value '" + s + "' too big for int16");
-
-    return x;
-}
-
-
-uint8_t dbus_flashmq::s_to_uint8(const std::string &s)
-{
-    uint16_t x = std::stoi(s);
-
-    if (x & 0xFF00)
-        throw ValueError("Value '" + s + "' too big for uint8");
-
-    return x;
-}
-
-uint16_t dbus_flashmq::s_to_uint16(const std::string &s)
-{
-    uint32_t x = std::stol(s);
-
-    if (x & 0xFFFF0000)
-        throw ValueError("Value '" + s + "' too big for uint16");
-
-    return x;
-}
-
 
 std::string dbus_flashmq::dbus_message_get_error_name_safe(DBusMessage *msg)
 {
