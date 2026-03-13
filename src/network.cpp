@@ -153,7 +153,7 @@ bool Network::match(const sockaddr *addr) const
         std::memcpy(&tmp_arg, addr, sizeof(tmp_arg));
 
         struct in6_addr arg_addr_relevant_bits;
-        for (int i = 0; i < 4; i++)
+        for (size_t i = 0; i < 4; i++)
         {
             arg_addr_relevant_bits.__in6_u.__u6_addr32[i] = tmp_arg.sin6_addr.__in6_u.__u6_addr32[i] & in6_mask.at(i);
         }

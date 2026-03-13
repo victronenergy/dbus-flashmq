@@ -731,9 +731,9 @@ void flashmq_plugin_poll_event_received(void *thread_data, int fd, uint32_t even
             continue;
 
         // Adding the implicit error flags to flags_of_watch.
-        int flags_of_watch = dbus_watch_get_flags(watch) | (DBusWatchFlags::DBUS_WATCH_ERROR | DBusWatchFlags::DBUS_WATCH_HANGUP);
-        int readiness_in_dbus_flags = epoll_flags_to_dbus_watch_flags(events);
-        int match_flags = flags_of_watch & readiness_in_dbus_flags;
+        unsigned int flags_of_watch = dbus_watch_get_flags(watch) | (DBusWatchFlags::DBUS_WATCH_ERROR | DBusWatchFlags::DBUS_WATCH_HANGUP);
+        unsigned int readiness_in_dbus_flags = epoll_flags_to_dbus_watch_flags(events);
+        unsigned int match_flags = flags_of_watch & readiness_in_dbus_flags;
 
         if (!dbus_watch_handle(watch, match_flags))
         {

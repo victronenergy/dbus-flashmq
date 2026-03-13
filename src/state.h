@@ -54,7 +54,7 @@ public:
     void remove_watch(DBusWatch *watch);
     const std::vector<DBusWatch*> &get_watches() const;
 
-    int get_combined_epoll_flags();
+    uint32_t get_combined_epoll_flags();
     bool empty() const;
 
 };

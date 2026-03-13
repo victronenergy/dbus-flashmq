@@ -80,7 +80,7 @@ void flashmq_poll_add_fd(int fd, uint32_t events, const std::weak_ptr<void> &p)
 void flashmq_poll_remove_fd(uint32_t fd)
 {
     TesterGlobals *globals = TesterGlobals::getInstance();
-    globals->pollExternalRemove(fd);
+    globals->pollExternalRemove(static_cast<int>(fd));
 }
 
 uint32_t flashmq_add_task(std::function<void ()> f, uint32_t delay_in_ms)

@@ -13,9 +13,9 @@
 namespace dbus_flashmq
 {
 
-int dbus_watch_flags_to_epoll(unsigned int dbus_flags);
-int epoll_flags_to_dbus_watch_flags(uint32_t epoll_flags);
-std::vector<std::string> splitToVector(const std::string &input, const char sep, size_t max = std::numeric_limits<int>::max(), bool keep_empty_parts = true);
+uint32_t dbus_watch_flags_to_epoll(unsigned int dbus_flags);
+unsigned int epoll_flags_to_dbus_watch_flags(uint32_t epoll_flags);
+std::vector<std::string> splitToVector(const std::string &input, const char sep, size_t max = std::numeric_limits<size_t>::max(), bool keep_empty_parts = true);
 std::string get_service_type(const std::string &service);
 ServiceIdentifier get_instance_from_items(const std::unordered_map<std::string, Item> &items);
 void ltrim(std::string &s);

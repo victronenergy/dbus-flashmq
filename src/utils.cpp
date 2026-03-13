@@ -10,14 +10,13 @@
 #include <sys/resource.h>
 #include <crypt.h>
 
-#include "exceptions.h"
 #include "fdguard.h"
 
 using namespace dbus_flashmq;
 
-int dbus_flashmq::dbus_watch_flags_to_epoll(unsigned int dbus_flags)
+uint32_t dbus_flashmq::dbus_watch_flags_to_epoll(unsigned int dbus_flags)
 {
-    int epoll_flags = 0;
+    uint32_t epoll_flags = 0;
 
     if (dbus_flags & DBUS_WATCH_READABLE)
     {
@@ -31,9 +30,9 @@ int dbus_flashmq::dbus_watch_flags_to_epoll(unsigned int dbus_flags)
     return epoll_flags;
 }
 
-int dbus_flashmq::epoll_flags_to_dbus_watch_flags(uint32_t epoll_flags)
+unsigned int dbus_flashmq::epoll_flags_to_dbus_watch_flags(uint32_t epoll_flags)
 {
-    int dbus_flags = 0;
+    unsigned int dbus_flags = 0;
 
     if (epoll_flags & EPOLLIN)
         dbus_flags |= DBusWatchFlags::DBUS_WATCH_READABLE;
@@ -51,7 +50,7 @@ std::vector<std::string> dbus_flashmq::splitToVector(const std::string &input, c
 {
     const auto substring_count = std::count(input.begin(), input.end(), sep) + 1;
     std::vector<std::string> result;
-    result.reserve(substring_count);
+    result.reserve(static_cast<size_t>(substring_count));
 
     size_t start = 0;
     size_t end;
@@ -155,7 +154,7 @@ std::string dbus_flashmq::get_stdout_from_process(const std::string &process, pi
         struct rlimit rlim;
         memset(&rlim, 0, sizeof (struct rlimit));
         getrlimit(RLIMIT_NOFILE, &rlim);
-        for (rlim_t i = 3; i < rlim.rlim_cur; ++i) close (i);
+        for (rlim_t i = 3; i < rlim.rlim_cur; ++i) close (static_cast<int>(i));
 
         execlp(process.c_str(), process.c_str(), nullptr);
         std::cerr << strerror(errno) << std::endl;

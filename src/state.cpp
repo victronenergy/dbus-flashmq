@@ -949,9 +949,9 @@ const std::vector<DBusWatch*> &Watch::get_watches() const
     return watches;
 }
 
-int Watch::get_combined_epoll_flags()
+uint32_t Watch::get_combined_epoll_flags()
 {
-    int result = 0;
+    uint32_t result = 0;
 
     for (DBusWatch *watch : watches)
     {
@@ -959,7 +959,7 @@ int Watch::get_combined_epoll_flags()
             continue;
 
         unsigned int dbus_flags = dbus_watch_get_flags(watch);
-        int epoll_flags = dbus_watch_flags_to_epoll(dbus_flags);
+        uint32_t epoll_flags = dbus_watch_flags_to_epoll(dbus_flags);
         result |= epoll_flags;
     }
 

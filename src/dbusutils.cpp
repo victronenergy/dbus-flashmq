@@ -29,9 +29,6 @@ std::vector<std::string> dbus_flashmq::get_array_from_reply(DBusMessage *msg)
         if (result_n++ > 1)
             throw std::runtime_error("there is more than one value in the result. We expected one array.");
 
-        int n = dbus_message_iter_get_element_count(&iter);
-        result.reserve(n);
-
         DBusMessageIter sub_iter;
         int current_sub_type = 0;
         dbus_message_iter_recurse(&iter, &sub_iter);

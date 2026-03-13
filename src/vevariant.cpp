@@ -258,9 +258,7 @@ std::unique_ptr<std::vector<VeVariant> > VeVariant::make_array(DBusMessageIter *
     if (dbus_message_iter_get_arg_type(iter) != DBUS_TYPE_ARRAY)
         throw ValueError("Calling make_array() on something other than array.");
 
-    const int n = dbus_message_iter_get_element_count(iter);
     std::unique_ptr<std::vector<VeVariant>> result = std::make_unique<std::vector<VeVariant>>();
-    result->reserve(n);
 
     DBusMessageIter array_iter;
     dbus_message_iter_recurse(iter, &array_iter);
