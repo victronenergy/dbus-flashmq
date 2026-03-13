@@ -1,17 +1,17 @@
 #include "dbus_functions.h"
 #include "vendor/flashmq_plugin.h"
 #include "state.h"
-#include "utils.h"
 #include "dbusmessageguard.h"
 
 #include "dbusutils.h"
 #include "dbuserrorguard.h"
-#include "dbusmessageitersignature.h"
 
 using namespace dbus_flashmq;
 
 void dbus_flashmq::dbus_dispatch_status_function(DBusConnection *connection, DBusDispatchStatus new_status, void *data)
 {
+    (void) connection;
+
     State *state = static_cast<State*>(data);
 
     if (new_status == DBusDispatchStatus::DBUS_DISPATCH_DATA_REMAINS)
@@ -97,6 +97,8 @@ void dbus_flashmq::dbus_timeout_do_handle(DBusTimeout *timeout)
 
 dbus_bool_t dbus_flashmq::dbus_add_timeout_function(DBusTimeout *timeout, void *data)
 {
+    (void)data;
+
     auto f = std::bind(&dbus_timeout_do_handle, timeout);
     int interval = dbus_timeout_get_interval(timeout);
 
@@ -118,6 +120,8 @@ dbus_bool_t dbus_flashmq::dbus_add_timeout_function(DBusTimeout *timeout, void *
 
 void dbus_flashmq::dbus_remove_timeout_function(DBusTimeout *timeout, void *data)
 {
+    (void)data;
+
     try
     {
         int *id2 = static_cast<int*>(dbus_timeout_get_data(timeout));
@@ -132,6 +136,8 @@ void dbus_flashmq::dbus_remove_timeout_function(DBusTimeout *timeout, void *data
 
 void dbus_flashmq::dbus_toggle_timeout_function(DBusTimeout *timeout, void *data)
 {
+    (void)timeout; (void)data;
+
     // Say whaaaat?!
     //flashmq_logf(LOG_ERR, "What do I do here?");
 }
@@ -192,6 +198,8 @@ void dbus_flashmq::dbus_pending_call_notify(DBusPendingCall *pending, void *data
 
 DBusHandlerResult dbus_flashmq::dbus_handle_message(DBusConnection *connection, DBusMessage *message, void *user_data)
 {
+    (void) connection;
+
     const char *_signal_name = dbus_message_get_member(message);
     const std::string signal_name(_signal_name ? _signal_name : "");
 

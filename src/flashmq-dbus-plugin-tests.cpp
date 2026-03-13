@@ -119,6 +119,8 @@ int pre_event_loop_test(void *data)
 
 int main(int argc, char **argv)
 {
+    (void) argc; (void)argv;
+
     tests_init_once();
 
     if (!crypt_match("hallo", "$2a$08$LBfjL0PfMBbjWxCzLBfjLurkA7K0tuDn44rNUXDBvatSgSqHvwaHS"))

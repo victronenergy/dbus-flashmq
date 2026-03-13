@@ -8,7 +8,6 @@
 #include <iomanip>
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h>
 #include <cstring>
 
 #include "testerglobals.h"
@@ -101,6 +100,10 @@ void flashmq_publish_message(const std::string &topic, const uint8_t qos, const 
                              const std::vector<std::pair<std::string, std::string>> *userProperties,
                              const std::string *responseTopic, const std::string *correlationData, const std::string *contentType)
 {
+    (void)access; (void)qos; (void)retain; (void)topic; (void)expiryInterval; (void)userProperties;
+    (void)payload; (void)qos; (void)retain; (void)correlationData; (void)responseTopic;
+    (void)contentType; (void)userProperties;
+
     std::cout << "DUMMY: " << topic << ": " << payload << std::endl;
 }
 
@@ -112,6 +115,8 @@ void flashmq_publish_message(const std::string &topic, const uint8_t qos, const 
  */
 void flashmq_get_client_address_v4(const std::weak_ptr<Client> &client, std::string *text, sockaddr *addr, socklen_t *addrlen)
 {
+    (void)client;
+
     if (addr && addrlen)
         std::memset(addr, 0, *addrlen);
 
@@ -123,17 +128,17 @@ void flashmq_get_client_address_v4(const std::weak_ptr<Client> &client, std::str
 
 void flashmq_continue_async_authentication(const std::weak_ptr<Client> &client, AuthResult result, const std::string &authMethod, const std::string &returnData)
 {
-
+    (void)client; (void) result; (void) authMethod; (void) returnData;
 }
 
 void flashmq_get_session_pointer(const std::string &clientid, const std::string &username, std::weak_ptr<Session> &sessionOut)
 {
-
+    (void)clientid; (void) username; (void) sessionOut;
 }
 
 void flashmq_get_client_pointer(const std::weak_ptr<Session> &session, std::weak_ptr<Client> &clientOut)
 {
-
+    (void)session; (void)clientOut;
 }
 
 void flashmq_plugin_remove_client_v4(const std::weak_ptr<Session> &session, bool alsoSession, ServerDisconnectReasons reasonCode)

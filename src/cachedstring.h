@@ -16,7 +16,7 @@ struct CachedString
     CachedString() = default;
     CachedString(CachedString &&other) = delete;
     CachedString(const CachedString &other);
-    CachedString &operator=(const CachedString &other);
+    CachedString &operator=(const CachedString&);
 };
 
 }

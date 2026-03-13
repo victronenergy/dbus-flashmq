@@ -8,7 +8,6 @@
 #include <sstream>
 #include <cassert>
 #include <sys/types.h>
-#include <signal.h>
 
 #include "dbus_functions.h"
 #include "dbusutils.h"
@@ -330,7 +329,7 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
     args.push_back(new_value);
     dbus_uint32_t serial = call_method(item.get_service_name(), item.get_path(), "com.victronenergy.BusItem", "SetValue", args, true);
 
-    auto set_value_handler = [](State *state, const std::string &topic, DBusMessage *msg) {
+    auto set_value_handler = [](const std::string &topic, DBusMessage *msg) {
         const int msg_type = dbus_message_get_type(msg);
 
         if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
@@ -343,7 +342,7 @@ void State::write_to_dbus(const std::string &topic, const std::string &payload)
         flashmq_logf(LOG_DEBUG, "SetValue on '%s' successful.", topic.c_str());
     };
 
-    auto handler = std::bind(set_value_handler, this, topic, std::placeholders::_1);
+    auto handler = std::bind(set_value_handler, topic, std::placeholders::_1);
     this->async_handlers[serial] = handler;
 }
 
@@ -665,7 +664,7 @@ bool State::match_local_net(const sockaddr *addr) const
 
 void State::write_bridge_connection_state(const std::string &bridge, const std::optional<bool> connected, const std::string &msg)
 {
-    auto answer_handler = [](State *state, const std::string &path, DBusMessage *msg) {
+    auto answer_handler = [](const std::string &path, DBusMessage *msg) {
         const int msg_type = dbus_message_get_type(msg);
 
         if (msg_type == DBUS_MESSAGE_TYPE_ERROR)
@@ -690,7 +689,7 @@ void State::write_bridge_connection_state(const std::string &bridge, const std::
                     "com.victronenergy.platform",
                     "SetValue", {bool_variant}, true);
 
-        auto handler = std::bind(answer_handler, this, path, std::placeholders::_1);
+        auto handler = std::bind(answer_handler, path, std::placeholders::_1);
         this->async_handlers[serial] = handler;
     }
 
@@ -704,7 +703,7 @@ void State::write_bridge_connection_state(const std::string &bridge, const std::
                     "com.victronenergy.platform",
                     "SetValue", {msg_variant}, true);
 
-        auto handler = std::bind(answer_handler, this, path, std::placeholders::_1);
+        auto handler = std::bind(answer_handler, path, std::placeholders::_1);
         this->async_handlers[serial] = handler;
     }
 }

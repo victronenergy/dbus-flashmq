@@ -77,11 +77,6 @@ std::string dbus_flashmq::get_service_type(const std::string &service)
     return parts.at(2);
 }
 
-std::string dbus_flashmq::get_uid_from_topic(const std::vector<std::string> &subtopics)
-{
-    return std::string();
-}
-
 ServiceIdentifier dbus_flashmq::get_instance_from_items(const std::unordered_map<std::string, Item> &items)
 {
     uint32_t deviceInstance = 0;
