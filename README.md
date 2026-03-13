@@ -230,8 +230,8 @@ servers (see the broker URL section for the correct URL). All communication is e
 
 There are two ways to authenticate:
 
-- VRM access token.
-- VRM username + password.
+- Preferred method: VRM access token.
+- Deprecated: VRM username + password. This will soon stop functioning.
 
 The recommended way is to use access tokens. In VRM, you can [manage access tokens here](https://vrm.victronenergy.com/access-tokens). To use them, give your VRM username (email address) as MQTT user, and as password, supply `Token <token>`.
 
