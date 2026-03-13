@@ -46,7 +46,8 @@ uint32_t QueuedTasks::getTimeTillNext() const
 
     std::chrono::milliseconds x = std::chrono::duration_cast<std::chrono::milliseconds>(next - std::chrono::steady_clock::now());
     std::chrono::milliseconds y = std::max<std::chrono::milliseconds>(std::chrono::milliseconds(0), x);
-    return y.count();
+    const auto result = std::max<decltype(y.count())>(y.count(), 0);
+    return static_cast<uint32_t>(result);
 }
 
 void QueuedTasks::performAll()

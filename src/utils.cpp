@@ -15,7 +15,7 @@
 
 using namespace dbus_flashmq;
 
-int dbus_flashmq::dbus_watch_flags_to_epoll(int dbus_flags)
+int dbus_flashmq::dbus_watch_flags_to_epoll(unsigned int dbus_flags)
 {
     int epoll_flags = 0;
 
@@ -31,7 +31,7 @@ int dbus_flashmq::dbus_watch_flags_to_epoll(int dbus_flags)
     return epoll_flags;
 }
 
-int dbus_flashmq::epoll_flags_to_dbus_watch_flags(int epoll_flags)
+int dbus_flashmq::epoll_flags_to_dbus_watch_flags(uint32_t epoll_flags)
 {
     int dbus_flags = 0;
 
@@ -79,14 +79,14 @@ std::string dbus_flashmq::get_service_type(const std::string &service)
 
 ServiceIdentifier dbus_flashmq::get_instance_from_items(const std::unordered_map<std::string, Item> &items)
 {
-    uint32_t deviceInstance = 0;
+    int deviceInstance = 0;
 
     for (auto &p : items)
     {
         const Item &i = p.second;
         if (i.get_path() == "/DeviceInstance")
         {
-            deviceInstance = i.get_value().value.as_int();
+            deviceInstance = i.get_value().value.as_int<int>();
             return deviceInstance;
         }
     }
@@ -270,9 +270,9 @@ VrmPortalMode dbus_flashmq::parseVrmPortalMode(int val)
 
 std::string &dbus_flashmq::str_make_lower(std::string &s)
 {
-    for (char &c : s)
+    for (auto &c : s)
     {
-        c = std::tolower(c);
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     }
 
     return s;

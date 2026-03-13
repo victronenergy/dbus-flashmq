@@ -65,7 +65,7 @@ Network::Network(const std::string &network)
 
         std::memcpy(this->data.data(), &tmpaddr, sizeof(tmpaddr));
 
-        uint32_t _netmask = (uint64_t)0xFFFFFFFFu << (32 - maskbits);
+        uint32_t _netmask = (static_cast<uint64_t>(0xFFFFFFFFu) << (32 - maskbits)) & 0xFFFFFFFF;
         this->in_mask = htonl(_netmask);
 
         this->family = AF_INET;
@@ -106,18 +106,18 @@ Network::Network(const std::string &network)
         }
 
         int m = maskbits;
-        int i = 0;
+        size_t i = 0;
         const uint64_t x{0xFFFFFFFF00000000};
 
         while (m > 0)
         {
             int shift_remainder = std::min<int>(m, 32);
-            uint32_t b = x >> shift_remainder;
+            uint32_t b = (x >> shift_remainder) & 0xFFFFFFFF;
             in6_mask.at(i++) = htonl(b);
             m -= 32;
         }
 
-        for (int i = 0; i < 4; i++)
+        for (size_t i = 0; i < 4; i++)
         {
             network_addr_relevant_bits.__in6_u.__u6_addr32[i] = tmpaddr.sin6_addr.__in6_u.__u6_addr32[i] & in6_mask.at(i);
         }

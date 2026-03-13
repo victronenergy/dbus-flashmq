@@ -88,7 +88,38 @@ public:
     explicit VeVariant(const std::optional<bool> b);
     std::string as_text() const;
     nlohmann::json as_json_value(bool mask=false) const;
-    int as_int() const;
+
+    template<typename T>
+    T as_int() const
+    {
+        switch (this->type)
+        {
+        case VeVariantType::IntegerSigned16:
+            return static_cast<T>(i16);
+        case VeVariantType::IntegerSigned32:
+            return static_cast<T>(i32);
+        case VeVariantType::IntegerSigned64:
+            return static_cast<T>(i64);
+        case VeVariantType::IntegerUnsigned8:
+            return static_cast<T>(u8);
+        case VeVariantType::IntegerUnsigned16:
+            return static_cast<T>(u16);
+        case VeVariantType::IntegerUnsigned32:
+            return static_cast<T>(u32);
+        case VeVariantType::IntegerUnsigned64:
+            return static_cast<T>(u64);
+        case VeVariantType::Double:
+            return static_cast<int>(d);
+        case VeVariantType::Boolean:
+            return static_cast<int>(bool_val);
+            break;
+        default:
+            return 0;
+        }
+
+        return 0;
+    }
+
     int get_dbus_type() const;
     std::string get_dbus_type_as_string_flat() const;
     std::string get_dbus_type_as_string_recursive() const;

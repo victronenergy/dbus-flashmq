@@ -131,7 +131,7 @@ void State::add_dbus_to_mqtt_mapping(const std::string &service, ServiceIdentifi
 
     if (fully_mapped_item.is_vrm_portal_mode())
     {
-        this->vrm_portal_mode = parseVrmPortalMode(fully_mapped_item.get_value().value.as_int());
+        this->vrm_portal_mode = parseVrmPortalMode(fully_mapped_item.get_value().value.as_int<int>());
         this->write_all_bridge_connection_states_debounced();
     }
 
@@ -958,7 +958,7 @@ int Watch::get_combined_epoll_flags()
         if (!dbus_watch_get_enabled(watch))
             continue;
 
-        int dbus_flags = dbus_watch_get_flags(watch);
+        unsigned int dbus_flags = dbus_watch_get_flags(watch);
         int epoll_flags = dbus_watch_flags_to_epoll(dbus_flags);
         result |= epoll_flags;
     }

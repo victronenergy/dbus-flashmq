@@ -150,7 +150,7 @@ int main(int argc, char **argv)
         const uint32_t next_task_delay = globals->delayedTasks.getTimeTillNext();
         const uint32_t epoll_wait_time = std::min<uint32_t>(next_task_delay, 100);
 
-        const int num_fds = epoll_wait(globals->epoll_fd, events, MAX_EVENTS, epoll_wait_time);
+        const int num_fds = epoll_wait(globals->epoll_fd, events, MAX_EVENTS, static_cast<int>(epoll_wait_time));
 
         if (epoll_wait_time == 0)
         {
