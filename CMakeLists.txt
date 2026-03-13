@@ -12,7 +12,7 @@ endif()
 
 project(flashmq-dbus-plugin VERSION 0.0.1 LANGUAGES CXX)
 
-add_compile_options(-Wall -Wno-psabi)
+add_compile_options(-Wall -Wextra -Wno-psabi)
 
 include(GNUInstallDirs)
 
