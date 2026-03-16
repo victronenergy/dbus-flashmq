@@ -20,6 +20,7 @@
 #include "dbusmessageiteropencontainerguard.h"
 #include "dbuspendingmessagecallguard.h"
 #include "exceptions.h"
+#include "guicustomizations.h"
 
 using namespace dbus_flashmq;
 
@@ -471,6 +472,8 @@ void State::publish_all(const std::optional<std::string> &payload_echo)
         }
     }
 
+    guiCustomizations.publish_customizations(this->unique_vrm_id, nullptr, nullptr);
+
     std::ostringstream done_topic;
     done_topic << "N/" << unique_vrm_id << "/full_publish_completed";
 
@@ -531,8 +534,14 @@ void State::remove_id_to_owner(const std::string &owner)
  * Read a fresh value and make sure item is added. This is because a path may not always send
  * PropertiesChanged (eg /vebus/Hub4/L1/AcPowerSetpoint) but can nevertheless be read.
  */
-void State::handle_read(const std::string &topic)
+void State::handle_read(const std::string &topic, const std::vector<std::string> &subtopics)
 {
+    if (subtopics.at(2) == std::string_view("GuiCustomizations"))
+    {
+        this->guiCustomizations.publish_customizations(this->unique_vrm_id, &topic, &subtopics);
+        return;
+    }
+
     try
     {
         const Item &item = find_item_by_mqtt_path(topic);

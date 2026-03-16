@@ -4,6 +4,8 @@ cmake_policy(SET CMP0048 NEW)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_definitions(-DOPENSSL_API_COMPAT=0x30000000L)
+
 if (DBUS_FMQ_ASAN)
     message("Building with ASAN.")
     add_compile_options(-fsanitize=address)
@@ -46,6 +48,7 @@ add_library(flashmq-dbus-plugin SHARED
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
   src/network.h src/network.cpp
   src/version.h
+  src/guicustomizations.h src/guicustomizations.cpp
 )
 
 add_executable(flashmq-dbus-plugin-tests
@@ -78,14 +81,15 @@ add_executable(flashmq-dbus-plugin-tests
   src/dbuspendingmessagecallguard.h src/dbuspendingmessagecallguard.cpp
   src/network.h src/network.cpp
   src/version.h
+  src/guicustomizations.h src/guicustomizations.cpp
 )
 
 target_include_directories(flashmq-dbus-plugin PUBLIC ${DBUS_INCLUDE_DIRS} .)
 target_include_directories(flashmq-dbus-plugin-tests PUBLIC ${DBUS_INCLUDE_DIRS} .)
 
-target_link_libraries(flashmq-dbus-plugin pthread dbus-1 resolv crypt)
+target_link_libraries(flashmq-dbus-plugin pthread dbus-1 resolv ssl crypto crypt)
 
-target_link_libraries(flashmq-dbus-plugin-tests pthread dbus-1 resolv crypt)
+target_link_libraries(flashmq-dbus-plugin-tests pthread dbus-1 resolv ssl crypto crypt)
 
 install(TARGETS flashmq-dbus-plugin-tests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS flashmq-dbus-plugin DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/flashmq")

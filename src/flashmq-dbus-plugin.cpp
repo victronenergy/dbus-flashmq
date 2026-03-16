@@ -377,7 +377,7 @@ void handle_venus_actions(
 
             if (path != "keepalive")
             {
-                state->handle_read(topic);
+                state->handle_read(topic, subtopics);
             }
         }
     }

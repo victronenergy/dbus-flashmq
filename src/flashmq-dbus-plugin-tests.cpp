@@ -6,6 +6,7 @@
 #include "testerglobals.h"
 #include "utils.h"
 #include "state.h"
+#include "guicustomizations.h"
 
 #define MAX_EVENTS 25
 
@@ -144,6 +145,9 @@ int main(int argc, char **argv)
 
     struct epoll_event events[MAX_EVENTS];
     memset(&events, 0, sizeof (struct epoll_event)*MAX_EVENTS);
+
+    GuiCustomizations g;
+    g.scan();
 
     while (true)
     {

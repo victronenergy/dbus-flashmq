@@ -15,6 +15,7 @@
 #include <set>
 #include "serviceidentifier.h"
 #include "network.h"
+#include "guicustomizations.h"
 
 #include "vendor/flashmq_plugin.h"
 
@@ -136,6 +137,8 @@ struct State
 
     std::vector<Network> local_nets;
 
+    GuiCustomizations guiCustomizations;
+
     State();
     ~State();
     void add_dbus_to_mqtt_mapping(const std::string &serivce, std::unordered_map<std::string, Item> &items, bool instance_must_be_known, bool force_publish=false);
@@ -162,7 +165,7 @@ struct State
     void set_new_id_to_owner(const std::string &owner, const std::string &name);
     void get_named_owner(std::string &sender) const;
     void remove_id_to_owner(const std::string &owner);
-    void handle_read(const std::string &topic);
+    void handle_read(const std::string &topic, const std::vector<std::string> &subtopics);
     void initiate_broker_registration(uint32_t delay);
     void per_second_action();
     void start_one_second_timer();
