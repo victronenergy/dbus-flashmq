@@ -9,6 +9,9 @@
 #include <iostream>
 #include <sys/resource.h>
 #include <crypt.h>
+#include <fstream>
+#include <memory>
+#include <openssl/evp.h>
 
 #include "fdguard.h"
 
@@ -278,5 +281,58 @@ std::string &dbus_flashmq::str_make_lower(std::string &s)
 }
 
 
+
+std::string dbus_flashmq::hash_file(const std::filesystem::path &p)
+{
+    std::ifstream f;
+    f.exceptions(std::ios::badbit);
+    f.open(p, std::ios::binary);
+
+    std::array<unsigned char, EVP_MAX_MD_SIZE> output {};
+    std::vector<char> buf(16384);
+    std::unique_ptr<EVP_MD_CTX, void(*)(EVP_MD_CTX*)> context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
+    EVP_MD_CTX_reset(context.get());
+    EVP_DigestInit_ex(context.get(), EVP_sha256(), NULL);
+
+    for(;;)
+    {
+        f.read(buf.data(), static_cast<std::streamsize>(buf.size()));
+
+        auto n = f.gcount();
+
+        if (f.gcount() <= 0)
+            break;
+
+        EVP_DigestUpdate(context.get(), buf.data(), static_cast<std::size_t>(n));
+    }
+
+    unsigned int output_len {};
+    EVP_DigestFinal(context.get(), output.data(), &output_len);
+
+    std::ostringstream oss;
+
+    for (size_t i = 0; i < output_len; i++)
+    {
+        oss << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(output.at(i));
+    }
+
+    return oss.str();
+}
+
+std::string dbus_flashmq::base64_encode(const std::string_view input)
+{
+    if (input.size() > std::numeric_limits<int>::max())
+        throw std::runtime_error("base64Encode size");
+
+    const int expected_len = 4*((static_cast<int>(input.size())+2)/3);
+    std::vector<unsigned char> output(input.size() * 2); // crude, but safe
+    const int out_len = EVP_EncodeBlock(output.data(), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+
+    if (expected_len != out_len)
+        throw std::runtime_error("Base64 encode error.");
+
+    std::string result = make_string(output, 0, static_cast<size_t>(out_len));
+    return result;
+}
 
 

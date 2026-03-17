@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <filesystem>
 #include <sys/random.h>
 
 #include "types.h"
@@ -38,6 +39,108 @@ T get_random()
 bool username_is_bridge(const std::string &username);
 bool crypt_match(const std::string &phrase, const std::string &crypted);
 VrmPortalMode parseVrmPortalMode(int val);
+std::string hash_file(const std::filesystem::path &p);
+
+template<typename T>
+typename std::enable_if<std::is_signed<T>::value, long long>::type
+value_to_int(const std::string &value)
+{
+    try
+    {
+        size_t len = 0;
+        const long long newVal{std::stoll(value, &len)};
+        if (len != value.length())
+        {
+            std::string err("Can't parse value to int: " + value);
+            throw std::runtime_error(err);
+        }
+        return newVal;
+    }
+    catch (std::exception &ex)
+    {
+        std::string err("Can't parse value to int: " + value);
+        throw std::runtime_error(err);
+    }
+}
+
+template<typename T>
+typename std::enable_if<std::is_unsigned<T>::value, long long unsigned>::type
+value_to_int(const std::string &value)
+{
+    try
+    {
+        size_t len = 0;
+        long long unsigned newVal{std::stoull(value, &len)};
+        if (len != value.length())
+        {
+            std::string err("Can't parse value to int: " + value);
+            throw std::runtime_error(err);
+        }
+        return newVal;
+    }
+    catch (std::exception &ex)
+    {
+        std::string err("Can't parse value to int: " + value);
+        throw std::runtime_error(err);
+    }
+}
+
+/**
+ * @brief Parse int safe from conversion errors or extraneous chars in value string.
+ * @param value
+ * @param min
+ * @param max
+ * @return
+ */
+template<typename T>
+T value_to_int_ranged(const std::string &value, const T min=std::numeric_limits<T>::min(), const T max=std::numeric_limits<T>::max())
+{
+    const auto newVal{value_to_int<T>(value)};
+    if (newVal < min || newVal > max)
+    {
+        std::ostringstream oss;
+        oss << "Value '" << value << "' out of range, which must be between ";
+
+        if (sizeof(T) == 1)
+            oss << static_cast<int>(min);
+        else
+            oss << min;
+
+        oss << " and ";
+
+        if (sizeof(T) == 1)
+            oss << static_cast<int>(max);
+        else
+            oss << max;
+
+        throw std::runtime_error(oss.str());
+    }
+    return static_cast<T>(newVal);
+}
+
+template<typename T>
+std::string make_string(const T &input, const size_t offset, const size_t len)
+{
+    if (len + offset > input.size())
+        throw std::out_of_range("make_string");
+
+    const auto _offset = static_cast<ssize_t>(offset);
+    const auto _len = static_cast<ssize_t>(len);
+    return std::string(input.begin() + _offset, input.begin() + _offset + _len);
+}
+
+template<typename T>
+std::string_view make_string_view(const T &input, const size_t offset, const size_t len)
+{
+    if (len + offset > input.size())
+        throw std::out_of_range("make_string_view");
+
+    const auto _offset = static_cast<ssize_t>(offset);
+    const auto _len = static_cast<ssize_t>(len);
+    return std::string_view(input.begin() + _offset, input.begin() + _offset + _len);
+}
+
+std::string base64_encode(const std::string_view input);
 
 }
 
