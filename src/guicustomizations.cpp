@@ -162,7 +162,7 @@ void dbus_flashmq::GuiCustomizations::publish_chunk(const std::string &vrm_id, c
     const std::string b64 = chunk.get_base64();
 
     std::ostringstream topic_oss;
-    topic_oss << "N/" << vrm_id << "/GuiCustomizations/" << app_name << "/Chunks/" << chunk_no;
+    topic_oss << "N/" << vrm_id << "/GuiCustomizations/Apps/" << app_name << "/Chunks/" << chunk_no;
     const std::string topic(topic_oss.str());
 
     nlohmann::json chunk_info = nlohmann::json::object();
