@@ -193,7 +193,10 @@ void dbus_flashmq::GuiCustomizations::publish_customizations(
 
             for (auto &pair : m_apps_cache.value())
             {
-                apps_list.push_back(pair.first);
+                auto obj = nlohmann::json::object();
+                obj["name"] = pair.first;
+                obj["sha256"] = pair.second.m_sha256_hex;
+                apps_list.push_back(obj);
             }
 
             std::ostringstream applist_oss;
