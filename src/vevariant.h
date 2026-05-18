@@ -89,7 +89,7 @@ public:
     std::string as_text() const;
     nlohmann::json as_json_value(bool mask=false) const;
 
-    template<typename T>
+    template<std::integral T>
     T as_int() const
     {
         switch (this->type)
@@ -109,9 +109,9 @@ public:
         case VeVariantType::IntegerUnsigned64:
             return static_cast<T>(u64);
         case VeVariantType::Double:
-            return static_cast<int>(d);
+            return static_cast<T>(d);
         case VeVariantType::Boolean:
-            return static_cast<int>(bool_val);
+            return static_cast<T>(bool_val);
             break;
         default:
             return 0;
