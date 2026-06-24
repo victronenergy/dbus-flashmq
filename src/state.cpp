@@ -1163,3 +1163,22 @@ void State::purge_old_usernames_to_clientids()
                 "purging_old_usernames_to_clientids done: %s users with a total of %s client IDs",
                  std::to_string(user_count).c_str(), std::to_string(client_id_count).c_str());
 }
+
+bool State::check_client_method_call_rate_limit(const std::string &clientid, const std::string &username, const std::string &topic)
+{
+    auto &bucket = client_method_call_buckets.try_emplace(clientid, 200, 1).first->second;
+
+    if (bucket.consume(1))
+        return true;
+
+    if (!bucket.is_logged())
+    {
+        flashmq_logf(
+            LOG_WARNING,
+            "Client '%s/%s' exceeded its method call rate limit. Dropping message for topic '%s', and silently dropping more.",
+            clientid.c_str(), username.c_str(), topic.c_str());
+        bucket.set_logged();
+    }
+
+    return false;
+}

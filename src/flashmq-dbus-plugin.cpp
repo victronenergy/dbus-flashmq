@@ -330,6 +330,7 @@ void flashmq_plugin_client_disconnected(void *thread_data, const std::string &cl
     State *state = static_cast<State*>(thread_data);
     state->security_profile_password_clients.erase(clientid);
     state->lan_clients.erase(clientid);
+    state->client_method_call_buckets.erase(clientid);
 }
 
 bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid, std::string &topic, const std::vector<std::string> &subtopics,
@@ -367,7 +368,7 @@ bool flashmq_plugin_alter_publish(void *thread_data, const std::string &clientid
 }
 
 void handle_venus_actions(
-    State *state, const std::string &action, const std::string &username,
+    State *state, const std::string &action, const std::string &clientid, const std::string &username,
     const std::string &topic, const std::vector<std::string> &subtopics, std::string_view payload)
 {
     // Wo only work on strings like R/<portalid>/system/0/Serial.
@@ -379,6 +380,9 @@ void handle_venus_actions(
          */
         if (username_is_bridge(username))
             state->vrmBridgeInterestTime = std::chrono::steady_clock::now();
+
+        if (!state->check_client_method_call_rate_limit(clientid, username, topic))
+            return;
 
         // There's also 'P' for mqtt-rpc, but we should ignore that, and not report it.
         if (action == "W")
@@ -649,7 +653,7 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
             }
 
             // The rest is not auth as such, but take actions based on the messages.
-            handle_venus_actions(state, action, username, topic, subtopics, payload);
+            handle_venus_actions(state, action, clientid, username, topic, subtopics, payload);
         }
         else if (access == AclAccess::read)
         {

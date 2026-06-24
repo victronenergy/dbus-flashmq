@@ -16,6 +16,7 @@
 #include "serviceidentifier.h"
 #include "network.h"
 #include "guicustomizations.h"
+#include "tokenbucket.h"
 
 #include "vendor/flashmq_plugin.h"
 
@@ -145,6 +146,8 @@ struct State
     int loginTokensLongTerm = LOGIN_TOKENS_LONG_TERM;
     std::chrono::time_point<std::chrono::steady_clock> longTermLoginTokensResetAt;
 
+    std::unordered_map<std::string, TokenBucket> client_method_call_buckets;
+
     std::vector<Network> local_nets;
 
     GuiCustomizations guiCustomizations;
@@ -192,6 +195,7 @@ struct State
     void register_user_and_clientid(const std::string &username, const std::string &clientid);
     void disconnect_all_connections_of_user(const std::string &username);
     void purge_old_usernames_to_clientids();
+    bool check_client_method_call_rate_limit(const std::string &clientid, const std::string &username, const std::string &topic);
 
 };
 

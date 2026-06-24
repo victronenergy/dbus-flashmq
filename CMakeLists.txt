@@ -49,6 +49,7 @@ add_library(flashmq-dbus-plugin SHARED
   src/network.h src/network.cpp
   src/version.h
   src/guicustomizations.h src/guicustomizations.cpp
+  src/tokenbucket.h src/tokenbucket.cpp
 )
 
 add_executable(flashmq-dbus-plugin-tests
@@ -82,6 +83,7 @@ add_executable(flashmq-dbus-plugin-tests
   src/network.h src/network.cpp
   src/version.h
   src/guicustomizations.h src/guicustomizations.cpp
+  src/tokenbucket.h src/tokenbucket.cpp
 )
 
 target_include_directories(flashmq-dbus-plugin PUBLIC ${DBUS_INCLUDE_DIRS} .)
