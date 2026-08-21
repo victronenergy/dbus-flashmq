@@ -595,11 +595,13 @@ AuthResult flashmq_plugin_acl_check(void *thread_data, const AclAccess access, c
 
         if (access == AclAccess::write)
         {
-            if (action == "W" && subtopics.size() >= 3 && subtopics.at(2) == "platform" && topic.find("/Security/Api") != std::string::npos)
+            if (action == "W" && subtopics.size() >= 3 && subtopics.at(2) == "platform")
             {
-                if (!state->is_privileged_user(clientid, username))
+                const bool protected_path = topic.find("/Security/Api") != std::string::npos || topic.find("/Tokens") != std::string::npos;
+
+                if (protected_path && !state->is_privileged_user(clientid, username))
                 {
-                    flashmq_logf(LOG_WARNING, "Attempt to invoke platform security API by non-privileged user.");
+                    flashmq_logf(LOG_WARNING, "Attempt to write to '%s' by non-privileged user.", topic.c_str());
                     return AuthResult::acl_denied;
                 }
             }
