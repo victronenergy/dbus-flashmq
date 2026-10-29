@@ -29,11 +29,10 @@ struct GuiCustomizationEntry
     const std::string m_sha256_hex {};
     const std::vector<GuiCustomizationChunk> m_chunks;
 
-    static std::filesystem::path get_blob_file_path(const std::filesystem::path &dir, std::string app_basename);
     static std::vector<GuiCustomizationChunk> calculate_chunks(const std::filesystem::path &blob_file_path);
 
 public:
-    GuiCustomizationEntry(const std::filesystem::path &dir_path);
+    GuiCustomizationEntry(const std::filesystem::path &blob_file_path);
 
 
 };

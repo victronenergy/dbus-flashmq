@@ -7,20 +7,14 @@
 #include "vendor/flashmq_plugin.h"
 #include "utils.h"
 
-dbus_flashmq::GuiCustomizationEntry::GuiCustomizationEntry(const std::filesystem::path &dir_path) :
-    m_app_basename(dir_path.filename()),
-    m_blob_file_path(get_blob_file_path(dir_path, m_app_basename)),
+// The plugin compiler writes <name>.json, so the file name is the plugin's name.
+dbus_flashmq::GuiCustomizationEntry::GuiCustomizationEntry(const std::filesystem::path &blob_file_path) :
+    m_app_basename(blob_file_path.stem()),
+    m_blob_file_path(blob_file_path),
     m_sha256_hex(dbus_flashmq::hash_file(m_blob_file_path)),
     m_chunks(calculate_chunks(m_blob_file_path))
 {
 
-}
-
-std::filesystem::path dbus_flashmq::GuiCustomizationEntry::get_blob_file_path(const std::filesystem::path &dir, std::string app_basename)
-{
-    app_basename.append(".json");
-    std::filesystem::path result(dir / "gui-v2" / app_basename);
-    return result;
 }
 
 std::vector<dbus_flashmq::GuiCustomizationChunk> dbus_flashmq::GuiCustomizationEntry::calculate_chunks(const std::filesystem::path &blob_file_path)
@@ -84,16 +78,30 @@ void dbus_flashmq::GuiCustomizations::scan_private()
 
     std::filesystem::path appdir = apps_path;
 
+    // Like gui-v2, publish every .json in each app's gui-v2 folder.
     for (const auto &entry : std::filesystem::directory_iterator(appdir))
     {
-        try
+        const std::filesystem::path plugins_dir = entry.path() / "gui-v2";
+
+        if (!std::filesystem::is_directory(plugins_dir))
+            continue;
+
+        for (const auto &plugin : std::filesystem::directory_iterator(plugins_dir))
         {
-            GuiCustomizationEntry app(entry);
-            m_apps_cache.value().try_emplace(app.m_app_basename, app);
-        }
-        catch(std::exception &ex)
-        {
-            flashmq_logf(LOG_ERROR, "Error indexing app '%s': %s", entry.path().filename().c_str(), ex.what());
+            try
+            {
+                if (!plugin.is_regular_file() || plugin.path().extension() != ".json")
+                    continue;
+
+                GuiCustomizationEntry app(plugin.path());
+
+                if (!m_apps_cache.value().try_emplace(app.m_app_basename, app).second)
+                    flashmq_logf(LOG_WARNING, "Ignoring clashing plugin '%s'", plugin.path().c_str());
+            }
+            catch(std::exception &ex)
+            {
+                flashmq_logf(LOG_ERROR, "Error indexing plugin '%s': %s", plugin.path().c_str(), ex.what());
+            }
         }
     }
 
