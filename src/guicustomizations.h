@@ -6,11 +6,12 @@
 #include <unordered_map>
 #include <filesystem>
 #include <optional>
+#include <set>
 
 namespace dbus_flashmq
 {
 
-constexpr std::string_view apps_path("/data/apps/enabled/");
+constexpr std::string_view apps_path("/run/gx-apps/apps/");
 
 struct GuiCustomizationChunk
 {
@@ -69,13 +70,15 @@ class GuiCustomizations
 {
     std::optional<std::unordered_map<std::string, GuiCustomizationEntry>> m_apps_cache;
     std::optional<size_t> m_apps_cache_hash;
+    std::set<std::string> m_enabled_apps;
 
-    static std::optional<size_t> get_cache_key();
+    std::optional<size_t> get_cache_key() const;
     void scan_private();
     static void publish_filtered(
             const std::string *read_request, const std::vector<std::string> *read_request_split, const std::string &topic, const std::string &payload);
     void publish_chunk(const std::string &vrm_id, const std::string &app_name, const unsigned int chunk_no);
 public:
+    bool set_enabled_apps(const std::set<std::string> &apps);
     void scan();
     void publish_customizations(
             const std::string &vrm_id, const std::string *read_request, const std::vector<std::string> *read_request_split);

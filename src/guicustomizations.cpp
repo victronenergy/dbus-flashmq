@@ -48,6 +48,19 @@ std::vector<dbus_flashmq::GuiCustomizationChunk> dbus_flashmq::GuiCustomizationE
     return result;
 }
 
+/**
+ * @brief Sets the apps, by name, whose GUI plugins are published.
+ * @return Whether the set changed.
+ */
+bool dbus_flashmq::GuiCustomizations::set_enabled_apps(const std::set<std::string> &apps)
+{
+    if (apps == m_enabled_apps)
+        return false;
+
+    m_enabled_apps = apps;
+    return true;
+}
+
 void dbus_flashmq::GuiCustomizations::scan()
 {
     try
@@ -76,12 +89,10 @@ void dbus_flashmq::GuiCustomizations::scan_private()
 
     m_apps_cache.emplace();
 
-    std::filesystem::path appdir = apps_path;
-
-    // Like gui-v2, publish every .json in each app's gui-v2 folder.
-    for (const auto &entry : std::filesystem::directory_iterator(appdir))
+    // Like gui-v2, publish every .json in the gui-v2 folder of each enabled app.
+    for (const std::string &app : m_enabled_apps)
     {
-        const std::filesystem::path plugins_dir = entry.path() / "gui-v2";
+        const std::filesystem::path plugins_dir = std::filesystem::path(apps_path) / app / "gui-v2";
 
         if (!std::filesystem::is_directory(plugins_dir))
             continue;
@@ -108,34 +119,40 @@ void dbus_flashmq::GuiCustomizations::scan_private()
     m_apps_cache_hash = real_hash;
 }
 
-std::optional<size_t> dbus_flashmq::GuiCustomizations::get_cache_key()
+// Only the enabled apps' plugin files are looked at, never the rest of an app.
+std::optional<size_t> dbus_flashmq::GuiCustomizations::get_cache_key() const
 {
-    std::optional<size_t> result;
-    const std::string apps_path_string(apps_path);
+    // Never empty, so that a change to no enabled apps is seen.
+    std::optional<size_t> result = 0;
 
-    try
+    for (const std::string &app : m_enabled_apps)
     {
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(apps_path_string, std::filesystem::directory_options::follow_directory_symlink))
+        result = result.value() ^ std::hash<std::string>()(app);
+
+        const std::filesystem::path plugins_dir = std::filesystem::path(apps_path) / app / "gui-v2";
+
+        try
         {
-            if (!std::filesystem::is_regular_file(entry.status()))
+            if (!std::filesystem::is_directory(plugins_dir))
                 continue;
 
-            const auto current_time = std::filesystem::last_write_time(entry);
-            auto current_time2 = std::chrono::clock_cast<std::chrono::system_clock>(current_time).time_since_epoch().count();
+            for (const auto &entry : std::filesystem::directory_iterator(plugins_dir))
+            {
+                if (!entry.is_regular_file())
+                    continue;
 
-            const std::string path_as_string = entry.path().string();
-            size_t addition = std::hash<std::string>()(path_as_string);
-            addition ^= std::hash<decltype(current_time2)>()(current_time2);
+                const auto current_time = std::filesystem::last_write_time(entry);
+                auto current_time2 = std::chrono::clock_cast<std::chrono::system_clock>(current_time).time_since_epoch().count();
 
-            if (!result)
-                result.emplace();
-
-            result = result.value() ^ addition;
+                size_t addition = std::hash<std::string>()(entry.path().string());
+                addition ^= std::hash<decltype(current_time2)>()(current_time2);
+                result = result.value() ^ addition;
+            }
         }
-    }
-    catch (std::exception &ex)
-    {
-        flashmq_logf(LOG_WARNING, "Can't obtain most recent file time in '%s': %s", apps_path_string.c_str(), ex.what());
+        catch (std::exception &ex)
+        {
+            flashmq_logf(LOG_WARNING, "Can't obtain file times in '%s': %s", plugins_dir.c_str(), ex.what());
+        }
     }
 
     return result;

@@ -478,6 +478,7 @@ void State::publish_all(const std::optional<std::string> &payload_echo)
         }
     }
 
+    guiCustomizations.set_enabled_apps(get_enabled_apps());
     guiCustomizations.publish_customizations(this->unique_vrm_id, nullptr, nullptr);
 
     std::ostringstream done_topic;
@@ -544,6 +545,7 @@ void State::handle_read(const std::string &topic, const std::vector<std::string>
 {
     if (subtopics.at(2) == std::string_view("GuiCustomizations"))
     {
+        this->guiCustomizations.set_enabled_apps(get_enabled_apps());
         this->guiCustomizations.publish_customizations(this->unique_vrm_id, &topic, &subtopics);
         return;
     }
@@ -633,6 +635,8 @@ void State::per_second_action()
     this->period_task_id = 0;
     start_one_second_timer();
 
+    update_gui_customizations();
+
     this->keepAliveTokens = KEEPALIVE_TOKENS;
     this->loginTokensShortTerm = std::min<int>(LOGIN_TOKENS_SHORT_TERM, this->loginTokensShortTerm + 1);
 
@@ -644,6 +648,70 @@ void State::per_second_action()
         this->longTermLoginTokensResetAt = std::chrono::steady_clock::now();
         this->passwordHistory.clear();
     }
+}
+
+/**
+ * @brief State::get_enabled_apps
+ * @return The names of the apps venus-app-manager has enabled.
+ *
+ * Only com.victronenergy.appmanager's /GxApps/<name>/Enable is followed, so no app is
+ * enabled while it isn't running. A path has '-' as '_'; /GxApps/<name>/Name holds the real name.
+ */
+std::set<std::string> State::get_enabled_apps() const
+{
+    std::set<std::string> result;
+
+    auto service_pos = dbus_service_items.find("com.victronenergy.appmanager");
+    if (service_pos == dbus_service_items.end())
+        return result;
+
+    const std::unordered_map<std::string, Item> &items = service_pos->second;
+    const std::string_view prefix("/GxApps/");
+    const std::string_view suffix("/Enable");
+
+    for (const auto &p : items)
+    {
+        const std::string &path = p.first;
+
+        if (!path.starts_with(prefix) || !path.ends_with(suffix) || path.size() <= prefix.size() + suffix.size())
+            continue;
+
+        try
+        {
+            if (p.second.get_value().value.as_int<int>() != 1)
+                continue;
+        }
+        catch (std::exception &)
+        {
+            continue;
+        }
+
+        const std::string branch = path.substr(0, path.size() - suffix.size());
+        std::string name = branch.substr(prefix.size());
+
+        auto name_pos = items.find(branch + "/Name");
+        if (name_pos != items.end())
+            name = name_pos->second.get_value().value.as_text();
+
+        if (name.empty() || name.find('/') != std::string::npos || name.starts_with("."))
+            continue;
+
+        result.insert(name);
+    }
+
+    return result;
+}
+
+/**
+ * @brief State::update_gui_customizations publishes the GUI plugins again when the enabled apps change.
+ */
+void State::update_gui_customizations()
+{
+    if (!guiCustomizations.set_enabled_apps(get_enabled_apps()))
+        return;
+
+    if (this->alive)
+        guiCustomizations.publish_customizations(this->unique_vrm_id, nullptr, nullptr);
 }
 
 void State::start_one_second_timer()
