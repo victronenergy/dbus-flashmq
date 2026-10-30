@@ -173,6 +173,7 @@ struct State
     void heartbeat();
     void publish_all(const std::optional<std::string> &payload_echo);
     std::set<std::string> get_enabled_apps() const;
+    std::string get_custom_branding() const;
     void update_gui_customizations();
     void set_new_id_to_owner(const std::string &owner, const std::string &name);
     void get_named_owner(std::string &sender) const;

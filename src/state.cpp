@@ -479,6 +479,7 @@ void State::publish_all(const std::optional<std::string> &payload_echo)
     }
 
     guiCustomizations.set_enabled_apps(get_enabled_apps());
+    guiCustomizations.set_custom_branding(get_custom_branding());
     guiCustomizations.publish_customizations(this->unique_vrm_id, nullptr, nullptr);
 
     std::ostringstream done_topic;
@@ -546,6 +547,7 @@ void State::handle_read(const std::string &topic, const std::vector<std::string>
     if (subtopics.at(2) == std::string_view("GuiCustomizations"))
     {
         this->guiCustomizations.set_enabled_apps(get_enabled_apps());
+        this->guiCustomizations.set_custom_branding(get_custom_branding());
         this->guiCustomizations.publish_customizations(this->unique_vrm_id, &topic, &subtopics);
         return;
     }
@@ -703,15 +705,39 @@ std::set<std::string> State::get_enabled_apps() const
 }
 
 /**
- * @brief State::update_gui_customizations publishes the GUI plugins again when the enabled apps change.
+ * @brief State::get_custom_branding
+ * @return com.victronenergy.appmanager's /CustomBranding: the name of the app whose Custom Branding is selected. Empty for none.
+ */
+std::string State::get_custom_branding() const
+{
+    auto service_pos = dbus_service_items.find("com.victronenergy.appmanager");
+    if (service_pos == dbus_service_items.end())
+        return std::string();
+
+    auto branding_pos = service_pos->second.find("/CustomBranding");
+    if (branding_pos == service_pos->second.end())
+        return std::string();
+
+    return branding_pos->second.get_value().value.as_text();
+}
+
+/**
+ * @brief State::update_gui_customizations publishes the GUI plugins again when the enabled apps change,
+ * and the Custom Branding when /CustomBranding or its file changes.
  */
 void State::update_gui_customizations()
 {
-    if (!guiCustomizations.set_enabled_apps(get_enabled_apps()))
+    const bool apps_changed = guiCustomizations.set_enabled_apps(get_enabled_apps());
+    const bool branding_selected = guiCustomizations.set_custom_branding(get_custom_branding());
+    const bool branding_changed = guiCustomizations.scan_custom_branding() || branding_selected;
+
+    if (!this->alive)
         return;
 
-    if (this->alive)
+    if (apps_changed)
         guiCustomizations.publish_customizations(this->unique_vrm_id, nullptr, nullptr);
+    else if (branding_changed)
+        guiCustomizations.publish_custom_branding(this->unique_vrm_id, nullptr, nullptr);
 }
 
 void State::start_one_second_timer()
