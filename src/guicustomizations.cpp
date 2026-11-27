@@ -7,20 +7,14 @@
 #include "vendor/flashmq_plugin.h"
 #include "utils.h"
 
-dbus_flashmq::GuiCustomizationEntry::GuiCustomizationEntry(const std::filesystem::path &dir_path) :
-    m_app_basename(dir_path.filename()),
-    m_blob_file_path(get_blob_file_path(dir_path, m_app_basename)),
+// The plugin compiler writes <name>.json, so the file name is the plugin's name.
+dbus_flashmq::GuiCustomizationEntry::GuiCustomizationEntry(const std::filesystem::path &blob_file_path) :
+    m_app_basename(blob_file_path.stem()),
+    m_blob_file_path(blob_file_path),
     m_sha256_hex(dbus_flashmq::hash_file(m_blob_file_path)),
     m_chunks(calculate_chunks(m_blob_file_path))
 {
 
-}
-
-std::filesystem::path dbus_flashmq::GuiCustomizationEntry::get_blob_file_path(const std::filesystem::path &dir, std::string app_basename)
-{
-    app_basename.append(".json");
-    std::filesystem::path result(dir / "gui-v2" / app_basename);
-    return result;
 }
 
 std::vector<dbus_flashmq::GuiCustomizationChunk> dbus_flashmq::GuiCustomizationEntry::calculate_chunks(const std::filesystem::path &blob_file_path)
@@ -54,6 +48,101 @@ std::vector<dbus_flashmq::GuiCustomizationChunk> dbus_flashmq::GuiCustomizationE
     return result;
 }
 
+/**
+ * @brief Sets the apps, by name, whose GUI plugins are published.
+ * @return Whether the set changed.
+ */
+bool dbus_flashmq::GuiCustomizations::set_enabled_apps(const std::set<std::string> &apps)
+{
+    if (apps == m_enabled_apps)
+        return false;
+
+    m_enabled_apps = apps;
+    return true;
+}
+
+/**
+ * @brief Sets the selected Custom Branding, by name. Empty for none.
+ * @return Whether it changed.
+ */
+bool dbus_flashmq::GuiCustomizations::set_custom_branding(const std::string &name)
+{
+    if (name == m_custom_branding)
+        return false;
+
+    m_custom_branding = name;
+    return true;
+}
+
+/**
+ * @brief The selected Custom Branding's file, if one is selected and its app is enabled.
+ */
+std::optional<std::filesystem::path> dbus_flashmq::GuiCustomizations::get_custom_branding_path() const
+{
+    if (m_custom_branding.empty() || m_custom_branding.find('/') != std::string::npos || m_custom_branding.starts_with(".") || !m_enabled_apps.contains(m_custom_branding))
+        return {};
+
+    return std::filesystem::path(apps_path) / m_custom_branding / "custom-branding" / (m_custom_branding + ".json");
+}
+
+// Changes when another Custom Branding is selected, or the file changes. Empty while there is no file.
+std::optional<size_t> dbus_flashmq::GuiCustomizations::get_custom_branding_cache_key() const
+{
+    const std::optional<std::filesystem::path> branding_path = get_custom_branding_path();
+
+    if (!branding_path)
+        return {};
+
+    try
+    {
+        if (!std::filesystem::is_regular_file(branding_path.value()))
+            return {};
+
+        const auto current_time = std::filesystem::last_write_time(branding_path.value());
+        auto current_time2 = std::chrono::clock_cast<std::chrono::system_clock>(current_time).time_since_epoch().count();
+
+        size_t result = std::hash<std::string>()(branding_path.value().string());
+        result ^= std::hash<decltype(current_time2)>()(current_time2);
+        result ^= std::hash<uintmax_t>()(std::filesystem::file_size(branding_path.value()));
+        return result;
+    }
+    catch (std::exception &ex)
+    {
+        flashmq_logf(LOG_WARNING, "Can't obtain the file time of '%s': %s", branding_path.value().c_str(), ex.what());
+    }
+
+    return {};
+}
+
+/**
+ * @brief Reads the selected Custom Branding's file again if it, or the selection, changed.
+ * @return Whether it changed.
+ */
+bool dbus_flashmq::GuiCustomizations::scan_custom_branding()
+{
+    const std::optional<size_t> real_hash = get_custom_branding_cache_key();
+
+    if (m_custom_branding_cache_hash == real_hash)
+        return false;
+
+    m_custom_branding_cache.reset();
+    m_custom_branding_cache_hash = real_hash;
+
+    if (!real_hash)
+        return true;
+
+    try
+    {
+        m_custom_branding_cache.emplace(get_custom_branding_path().value());
+    }
+    catch (std::exception &ex)
+    {
+        flashmq_logf(LOG_ERROR, "Error indexing custom branding '%s': %s", m_custom_branding.c_str(), ex.what());
+    }
+
+    return true;
+}
+
 void dbus_flashmq::GuiCustomizations::scan()
 {
     try
@@ -82,52 +171,70 @@ void dbus_flashmq::GuiCustomizations::scan_private()
 
     m_apps_cache.emplace();
 
-    std::filesystem::path appdir = apps_path;
-
-    for (const auto &entry : std::filesystem::directory_iterator(appdir))
+    // Like gui-v2, publish every .json in the gui-v2 folder of each enabled app.
+    for (const std::string &app : m_enabled_apps)
     {
-        try
+        const std::filesystem::path plugins_dir = std::filesystem::path(apps_path) / app / "gui-v2";
+
+        if (!std::filesystem::is_directory(plugins_dir))
+            continue;
+
+        for (const auto &plugin : std::filesystem::directory_iterator(plugins_dir))
         {
-            GuiCustomizationEntry app(entry);
-            m_apps_cache.value().try_emplace(app.m_app_basename, app);
-        }
-        catch(std::exception &ex)
-        {
-            flashmq_logf(LOG_ERROR, "Error indexing app '%s': %s", entry.path().filename().c_str(), ex.what());
+            try
+            {
+                if (!plugin.is_regular_file() || plugin.path().extension() != ".json")
+                    continue;
+
+                GuiCustomizationEntry app(plugin.path());
+
+                if (!m_apps_cache.value().try_emplace(app.m_app_basename, app).second)
+                    flashmq_logf(LOG_WARNING, "Ignoring clashing plugin '%s'", plugin.path().c_str());
+            }
+            catch(std::exception &ex)
+            {
+                flashmq_logf(LOG_ERROR, "Error indexing plugin '%s': %s", plugin.path().c_str(), ex.what());
+            }
         }
     }
 
     m_apps_cache_hash = real_hash;
 }
 
-std::optional<size_t> dbus_flashmq::GuiCustomizations::get_cache_key()
+// Only the enabled apps' plugin files are looked at, never the rest of an app.
+std::optional<size_t> dbus_flashmq::GuiCustomizations::get_cache_key() const
 {
-    std::optional<size_t> result;
-    const std::string apps_path_string(apps_path);
+    // Never empty, so that a change to no enabled apps is seen.
+    std::optional<size_t> result = 0;
 
-    try
+    for (const std::string &app : m_enabled_apps)
     {
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(apps_path_string, std::filesystem::directory_options::follow_directory_symlink))
+        result = result.value() ^ std::hash<std::string>()(app);
+
+        const std::filesystem::path plugins_dir = std::filesystem::path(apps_path) / app / "gui-v2";
+
+        try
         {
-            if (!std::filesystem::is_regular_file(entry.status()))
+            if (!std::filesystem::is_directory(plugins_dir))
                 continue;
 
-            const auto current_time = std::filesystem::last_write_time(entry);
-            auto current_time2 = std::chrono::clock_cast<std::chrono::system_clock>(current_time).time_since_epoch().count();
+            for (const auto &entry : std::filesystem::directory_iterator(plugins_dir))
+            {
+                if (!entry.is_regular_file())
+                    continue;
 
-            const std::string path_as_string = entry.path().string();
-            size_t addition = std::hash<std::string>()(path_as_string);
-            addition ^= std::hash<decltype(current_time2)>()(current_time2);
+                const auto current_time = std::filesystem::last_write_time(entry);
+                auto current_time2 = std::chrono::clock_cast<std::chrono::system_clock>(current_time).time_since_epoch().count();
 
-            if (!result)
-                result.emplace();
-
-            result = result.value() ^ addition;
+                size_t addition = std::hash<std::string>()(entry.path().string());
+                addition ^= std::hash<decltype(current_time2)>()(current_time2);
+                result = result.value() ^ addition;
+            }
         }
-    }
-    catch (std::exception &ex)
-    {
-        flashmq_logf(LOG_WARNING, "Can't obtain most recent file time in '%s': %s", apps_path_string.c_str(), ex.what());
+        catch (std::exception &ex)
+        {
+            flashmq_logf(LOG_WARNING, "Can't obtain file times in '%s': %s", plugins_dir.c_str(), ex.what());
+        }
     }
 
     return result;
@@ -171,9 +278,81 @@ void dbus_flashmq::GuiCustomizations::publish_chunk(const std::string &vrm_id, c
     flashmq_publish_message(topic, 0, false, chunk_info.dump());
 }
 
+void dbus_flashmq::GuiCustomizations::publish_custom_branding_chunk(const std::string &vrm_id, const unsigned int chunk_no)
+{
+    if (!m_custom_branding_cache || chunk_no >= m_custom_branding_cache.value().m_chunks.size())
+        return;
+
+    const std::string b64 = m_custom_branding_cache.value().m_chunks.at(chunk_no).get_base64();
+
+    std::ostringstream topic_oss;
+    topic_oss << "N/" << vrm_id << "/GuiCustomizations/CustomBranding/Chunks/" << chunk_no;
+
+    nlohmann::json chunk_info = nlohmann::json::object();
+    chunk_info["base64"] = b64;
+
+    flashmq_publish_message(topic_oss.str(), 0, false, chunk_info.dump());
+}
+
+/**
+ * @brief Publishes the selected Custom Branding's info, or one of its chunks when that is what is read.
+ */
+void dbus_flashmq::GuiCustomizations::publish_custom_branding(
+        const std::string &vrm_id, const std::string *read_request, const std::vector<std::string> *read_request_split)
+{
+    try
+    {
+        scan_custom_branding();
+
+        if (read_request_split && read_request_split->size() == 6 && read_request_split->at(2) == "GuiCustomizations"
+            && read_request_split->at(3) == "CustomBranding" && read_request_split->at(4) == "Chunks")
+        {
+            const unsigned int chunkno{value_to_int_ranged<unsigned int>(read_request_split->at(5))};
+            publish_custom_branding_chunk(vrm_id, chunkno);
+            return;
+        }
+
+        std::ostringstream base_path_oss;
+        base_path_oss << "N/" << vrm_id << "/GuiCustomizations/CustomBranding";
+        const std::string base_path(base_path_oss.str());
+
+        if (!m_custom_branding_cache)
+        {
+            // Clear the Custom Branding that was published, once. A read gets nothing, like a path that isn't there.
+            if (m_custom_branding_published && !read_request)
+            {
+                flashmq_publish_message(base_path + "/info", 0, false, "");
+                m_custom_branding_published = false;
+            }
+            return;
+        }
+
+        std::string fetch_prefix(base_path + "/Chunks/");
+        fetch_prefix.at(0) = 'R';
+
+        nlohmann::json info = nlohmann::json::object();
+        info["name"] = m_custom_branding;
+        info["sha256"] = m_custom_branding_cache.value().m_sha256_hex;
+        info["chunk_count"] = m_custom_branding_cache.value().m_chunks.size();
+        info["fetch_prefix"] = fetch_prefix;
+
+        publish_filtered(read_request, read_request_split, base_path + "/info", info.dump());
+        m_custom_branding_published = true;
+    }
+    catch (std::exception &ex)
+    {
+        flashmq_logf(LOG_ERROR, "Error in GuiCustomizations::publish_custom_branding: %s", ex.what());
+    }
+}
+
 void dbus_flashmq::GuiCustomizations::publish_customizations(
         const std::string &vrm_id, const std::string *read_request, const std::vector<std::string> *read_request_split)
 {
+    publish_custom_branding(vrm_id, read_request, read_request_split);
+
+    if (read_request_split && read_request_split->size() > 3 && read_request_split->at(3) == "CustomBranding")
+        return;
+
     try
     {
         scan_private();
